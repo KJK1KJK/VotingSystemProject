@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -12,5 +12,19 @@ class UserOut(UserBase):
     id: int
     time_created: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+#Admin schema
+class AdminBase(BaseModel):
+    username: str
+    email: EmailStr
+
+class AdminCreate(UserBase):
+    password: str
+
+class AdminOut(UserBase):
+    id: int
+    time_created: datetime
+
+    model_config = ConfigDict(from_attributes=True)

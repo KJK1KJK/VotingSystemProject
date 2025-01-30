@@ -1,6 +1,7 @@
 from sqlalchemy.sql import func
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from app.services.database import Base
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -10,3 +11,20 @@ class User(Base):
     email = Column(String, index=True, unique=True, nullable=False)
     password = Column(String, nullable=False)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
+
+    type = Column(String, nullable=False)
+
+    __mapper_args__ = {
+        "polymorphic_identity": "user",
+        "polymorphic_on": type,
+        "with_polymorphic": "*"
+    }
+
+class AdminUser(User):
+    __tablename__ = "administrators"
+
+    id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+
+    __mapper_args__ = {
+        "polymorphic_identity": "admin",
+    }
