@@ -17,11 +17,7 @@ def create_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
 
     #Create new feedback entry
-    new_feedback = Feedback(
-        user_id = feedback.user_id,
-        title = feedback.title,
-        description = feedback.description
-        )
+    new_feedback = Feedback(**feedback.dict())
     db.add(new_feedback)
     db.commit()
     db.refresh(new_feedback)

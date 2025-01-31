@@ -1,3 +1,4 @@
+from app.models import whitelist
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -16,3 +17,4 @@ class VotingSession(Base):
     creator = relationship("User", back_populates="voting_sessions")
     settings = relationship("SessionSettings", back_populates="voting_session", cascade="all, delete-orphan")
     questions = relationship("Question", back_populates="voting_session", cascade="all, delete-orphan")
+    whitelist = relationship("Whitelist", back_populates="session", cascade="all, delete-orphan")
