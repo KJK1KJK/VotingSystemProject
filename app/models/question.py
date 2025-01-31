@@ -15,4 +15,3 @@ class Question(Base):
     voting_session = relationship("VotingSession", back_populates="questions")
     answers = relationship("Answer", back_populates="question", cascade="all, delete-orphan")
     candidates = relationship("Candidate", back_populates="question", cascade="all, delete-orphan")
-    votes = relationship("Vote", back_populates="candidate", cascade="all, delete-orphan")

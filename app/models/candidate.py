@@ -12,3 +12,4 @@ class Candidate(Base):
     user_input = Column(String, nullable=True)
 
     question = relationship("Question", back_populates="candidates")
+    votes = relationship("Vote", back_populates="candidate", cascade="all, delete-orphan")

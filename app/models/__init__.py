@@ -6,3 +6,5 @@ from .question import Question
 from .session_settings import SessionSettings
 from .vote import Vote
 from .voting_session import VotingSession
+from .feedback import Feedback
+from .whitelist import Whitelist

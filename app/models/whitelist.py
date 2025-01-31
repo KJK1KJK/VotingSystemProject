@@ -10,4 +10,4 @@ class Whitelist(Base):
     session_id = Column(Integer, ForeignKey("voting_sessions.id"))
     
     user = relationship("User", back_populates="whitelist")
-    session = relationship("Session", back_populates="whitelist")
+    session = relationship("VotingSession", back_populates="whitelist")
