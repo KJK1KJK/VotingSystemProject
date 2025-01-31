@@ -24,6 +24,7 @@ def create_question(
     if not session:
         raise HTTPException(status_code=404, detail="Voting session not found")
 
+    #Creare a new question entry
     new_question = Question(
         session_id=session_id,
         type=question_data.type,
@@ -40,9 +41,9 @@ def create_question(
 #Get all questions for a voting session
 @router.get("/{session_id}/questions/", response_model=List[QuestionResponse])
 def get_questions(session_id: int, db: Session = Depends(get_db)):
-    #Fetch all questions for a specific voting session
+
+    #Check if question exists
     questions = db.query(Question).filter(Question.session_id == session_id).all()
-    
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for this session")
     
@@ -52,6 +53,7 @@ def get_questions(session_id: int, db: Session = Depends(get_db)):
 @router.get("/questions/{question_id}", response_model=QuestionResponse)
 def get_question(question_id: int, db: Session = Depends(get_db)):
     
+    #Check if question exists 
     question = db.query(Question).filter(Question.id == question_id).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
@@ -65,6 +67,7 @@ def update_question(
     db: Session = Depends(get_db)
 ):
     
+    #Check if question exists
     question = db.query(Question).filter(Question.id == question_id).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
@@ -82,6 +85,7 @@ def update_question(
 @router.delete("/questions/{question_id}")
 def delete_question(question_id: int, db: Session = Depends(get_db)):
     
+    #Check if question exists
     question = db.query(Question).filter(Question.id == question_id).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")

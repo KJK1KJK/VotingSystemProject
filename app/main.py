@@ -20,6 +20,8 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+#Uncomment the api keys line if you want to enable authentication!
+
 # Apply API key verification to all API routes
 #app.middleware("http")(api_key_middleware)
 

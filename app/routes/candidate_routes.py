@@ -24,6 +24,7 @@ def create_candidate(
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
+    #Create a new candidate entry
     new_candidate = Candidate(
         question_id=question_id,
         name=candidate_data.name,
@@ -56,7 +57,7 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Candidate not found")
     return candidate
 
-# Update a candidate
+#Update a candidate
 @router.put("/candidates/{candidate_id}", response_model=CandidateResponse)
 def update_candidate(
     candidate_id: int,
@@ -76,9 +77,10 @@ def update_candidate(
     db.refresh(candidate)
     return candidate
 
-# Delete a candidate
+#Delete a candidate
 @router.delete("/candidates/{candidate_id}")
 def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
+
     #Check if candidate exists
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:

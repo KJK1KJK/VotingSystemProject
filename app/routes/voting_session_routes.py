@@ -1,3 +1,4 @@
+from app.models import voting_session
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -15,10 +16,13 @@ def create_voting_session(
     creator_id: int, 
     db: Session = Depends(get_db)
 ):
+
+    #Check if user exists
     creator = db.query(User).filter(User.id == creator_id).first()
     if not creator:
         raise HTTPException(status_code=404, detail="User not found")
 
+    #Create a new voting session entry
     new_session = VotingSession(
         title=session_data.title,
         description=session_data.description,
@@ -33,14 +37,24 @@ def create_voting_session(
 #Get all voting sessions
 @router.get("/", response_model=List[VotingSessionResponse])
 def get_voting_sessions(db: Session = Depends(get_db)):
-    return db.query(VotingSession).all()
+
+
+    sessions = db.query(VotingSession).all()
+
+    if not sessions:
+        raise HTTPException(status_code=404, detail="No voting sessions not found")
+
+    return sessions
 
 #Get a voting session by ID
 @router.get("/{session_id}", response_model=VotingSessionResponse)
 def get_voting_session(session_id: int, db: Session = Depends(get_db)):
+
+    #Check if session exists
     session = db.query(VotingSession).filter(VotingSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Voting session not found")
+
     return session
 
 #Delete a voting session
@@ -58,10 +72,12 @@ def delete_voting_session(session_id: int, db: Session = Depends(get_db)):
 #Publish a voting session
 @router.patch("/{session_id}/publish")
 def publish_voting_session(session_id: int, db: Session = Depends(get_db)):
-    #Check if id in database
+
+    #Check if session in database
     session = db.query(VotingSession).filter(VotingSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Voting session not found")
+
     #Mark a voting session as published.
     session.is_published = True
     db.commit()
@@ -84,7 +100,8 @@ def get_published_sessions(user_id: int, db: Session = Depends(get_db)):
 # Get all drafts for a user
 @router.get("/user/{user_id}/drafts", response_model=List[VotingSessionResponse])
 def get_unpublished_sessions(user_id: int, db: Session = Depends(get_db)):
-    #Fetch all unpublished voting sessions by a user
+
+    #Fetch all drafts for a user
     sessions = db.query(VotingSession).filter(
         VotingSession.creator_id == user_id,
         VotingSession.is_published == False

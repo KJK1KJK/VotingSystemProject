@@ -14,6 +14,8 @@ class User(Base):
 
     voting_sessions = relationship("VotingSession", back_populates="creator")
     votes = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
+    feedbacks = relationship("Feedback", back_populates="user")
+
     type = Column(String, nullable=False)
 
     __mapper_args__ = {

@@ -25,7 +25,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     #Hash the password
     hashed_password = bcrypt.hash(user.password)
 
-    #Create a new user
+    #Create a new user entry
     new_user = User(username=user.username, email=user.email, password=hashed_password)
     db.add(new_user)
     db.commit()
@@ -35,9 +35,12 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 #Delete user
 @router.delete("/{user_id}", response_model=dict)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
+
+    #Check if user exists
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
@@ -45,25 +48,35 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 #Get user by username
 @router.get("/username/{user_name}", response_model=UserOut)
 def get_user(user_name: str, db: Session = Depends(get_db)):
+
+    #Check if user exists
     user = db.query(User).filter(User.username == user_name).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     return user
 
 #Get user by id
 @router.get("/id/{user_id}", response_model=UserOut)
 def get_user(user_id: int, db: Session = Depends(get_db)):
+
+    #Check if user exists
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     return user
 
 #Get user by email
 @router.get("/email/{user_email}", response_model=UserOut)
 def get_user(user_email: str, db: Session = Depends(get_db)):
+
+    #Check if user exists
     user = db.query(User).filter(User.email == user_email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+
     return user
 
 #Check if user exists
@@ -75,9 +88,12 @@ def check_user_exists(user_name: str, db: Session = Depends(get_db)):
 #Login and get user credentials
 @router.post("/login/", response_model=UserBase)
 def login(email: str, password: str, db: Session = Depends(get_db)):
+
+    #Check if credintials are correct
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Invalid email or password")
     if not bcrypt.verify(password, user.password):
         raise HTTPException(status_code=404, detail="Invalid email or password")
+
     return {"username": user.username, "email": user.email}

@@ -29,6 +29,7 @@ def cast_vote(vote_data: VoteCreate, db: Session = Depends(get_db)):
     if existing_vote:
         raise HTTPException(status_code=400, detail="User has already voted for this candidate")
 
+    #Create a new vote entry
     new_vote = Vote(
         user_id=vote_data.user_id,
         candidate_id=vote_data.candidate_id
@@ -42,6 +43,7 @@ def cast_vote(vote_data: VoteCreate, db: Session = Depends(get_db)):
 #Get all votes for a candidate
 @router.get("/candidate/{candidate_id}", response_model=List[VoteResponse])
 def get_votes_by_candidate(candidate_id: int, db: Session = Depends(get_db)):
+
     #Check if the candidate exists
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
@@ -53,11 +55,13 @@ def get_votes_by_candidate(candidate_id: int, db: Session = Depends(get_db)):
 #Get all votes cast by a user
 @router.get("/user/{user_id}", response_model=List[VoteResponse])
 def get_user_votes(user_id: int, db: Session = Depends(get_db)):
+
     #Check if the user exists
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    #Get all the votes for the user
     votes = db.query(Vote).filter(Vote.user_id == user_id).all()
     return votes
 
@@ -105,6 +109,7 @@ def get_session_results(session_id: int, db: Session = Depends(get_db)):
 #Delete a vote
 @router.delete("/{vote_id}")
 def delete_vote(vote_id: int, db: Session = Depends(get_db)):
+
     #Check if vote exists
     vote = db.query(Vote).filter(Vote.id == vote_id).first()
     if not vote:

@@ -41,6 +41,7 @@ def create_answer(
 #Get all answers for a question
 @router.get("/{question_id}/answers/", response_model=List[AnswerResponse])
 def get_answers(question_id: int, db: Session = Depends(get_db)):
+
     #Check if the question exists
     question = db.query(Question).filter(Question.id == question_id).first()
     if not question:
@@ -52,6 +53,7 @@ def get_answers(question_id: int, db: Session = Depends(get_db)):
 #Get a specific answer
 @router.get("/answers/{answer_id}", response_model=AnswerResponse)
 def get_answer(answer_id: int, db: Session = Depends(get_db)):
+
     #Check if the answer exists
     answer = db.query(Answer).filter(Answer.id == answer_id).first()
     if not answer:
