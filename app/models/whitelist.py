@@ -7,7 +7,7 @@ class Whitelist(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    session_id = Column(Integer, ForeignKey("sessions.id"))
+    session_id = Column(Integer, ForeignKey("voting_sessions.id"))
     
     user = relationship("User", back_populates="whitelist")
     session = relationship("Session", back_populates="whitelist")

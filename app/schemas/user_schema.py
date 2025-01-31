@@ -12,7 +12,8 @@ class UserOut(UserBase):
     id: int
     time_created: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
 
 #Admin schema
@@ -27,4 +28,5 @@ class AdminOut(UserBase):
     id: int
     time_created: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True

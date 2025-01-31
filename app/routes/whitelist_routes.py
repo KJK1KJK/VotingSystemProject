@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.services.database import get_db
 from app.models.whitelist import Whitelist
 from app.schemas.whitelist import WhitelistCreate, WhitelistResponse
-from app.models.session import Session as VotingSession
+from app.models.voting_session import VotingSession as VotingSession
 from app.models.user import User
 
 router = APIRouter()
