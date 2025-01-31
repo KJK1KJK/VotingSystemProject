@@ -43,6 +43,7 @@
     <Compile Include="app\routes\candidate_routes.py" />
     <Compile Include="app\routes\feedback_routes.py" />
     <Compile Include="app\routes\question_routes.py" />
+    <Compile Include="app\routes\session_search_routes.py" />
     <Compile Include="app\routes\session_settings_routes.py" />
     <Compile Include="app\routes\user_routes.py" />
     <Compile Include="app\routes\vote_routes.py" />
