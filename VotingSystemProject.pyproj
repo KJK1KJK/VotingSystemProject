@@ -25,11 +25,32 @@
   <ItemGroup>
     <Compile Include="app\config.py" />
     <Compile Include="app\main.py" />
+    <Compile Include="app\middleware.py" />
+    <Compile Include="app\models\answer.py" />
+    <Compile Include="app\models\api_key.py" />
+    <Compile Include="app\models\candidate.py" />
+    <Compile Include="app\models\question.py" />
+    <Compile Include="app\models\session_settings.py" />
     <Compile Include="app\models\user.py" />
+    <Compile Include="app\models\vote.py" />
+    <Compile Include="app\models\voting_session.py" />
     <Compile Include="app\models\__init__.py" />
     <Compile Include="app\routes\admin_routes.py" />
+    <Compile Include="app\routes\answer_routes.py" />
+    <Compile Include="app\routes\api_key_routes.py" />
+    <Compile Include="app\routes\candidate_routes.py" />
+    <Compile Include="app\routes\question_routes.py" />
+    <Compile Include="app\routes\session_settings_routes.py" />
     <Compile Include="app\routes\user_routes.py" />
+    <Compile Include="app\routes\vote_routes.py" />
+    <Compile Include="app\routes\voting_session_routes.py" />
+    <Compile Include="app\schemas\answer.py" />
+    <Compile Include="app\schemas\candidate.py" />
+    <Compile Include="app\schemas\question.py" />
+    <Compile Include="app\schemas\session_settings.py" />
     <Compile Include="app\schemas\user_schema.py" />
+    <Compile Include="app\schemas\vote.py" />
+    <Compile Include="app\schemas\voting_session.py" />
     <Compile Include="app\services\database.py" />
     <Compile Include="app\__init__.py" />
   </ItemGroup>

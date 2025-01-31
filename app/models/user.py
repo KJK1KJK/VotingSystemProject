@@ -12,6 +12,8 @@ class User(Base):
     password = Column(String, nullable=False)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
 
+    voting_sessions = relationship("VotingSession", back_populates="creator")
+    votes = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
     type = Column(String, nullable=False)
 
     __mapper_args__ = {
