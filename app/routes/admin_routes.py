@@ -16,12 +16,18 @@ def get_admins(db: Session = Depends(get_db)):
 
 #Register a new admin
 @router.post("/", response_model=AdminOut)
-def create_admin(user: AdminCreate, db: Session = Depends(get_db)):
-    #Check if email already exists
+def create_admin(admin: AdminCreate, db: Session = Depends(get_db)):
+
+    #Check if admin already exists
     db_admin = db.query(AdminUser).filter(AdminUser.username == admin.username).first()
     if db_admin:
         raise HTTPException(status_code=400, detail="Admin already registered")
     
+    #Check if email already exists
+    db_admin = db.query(AdminUser).filter(AdminUser.email == admin.email).first()
+    if db_admin:
+        raise HTTPException(status_code=400, detail="Admin already registered")
+
     #Hash the password
     hashed_password = bcrypt.hash(admin.password)
 
@@ -36,8 +42,12 @@ def create_admin(user: AdminCreate, db: Session = Depends(get_db)):
 @router.delete("/{admin_id}", response_model=dict)
 def delete_user(admin_id: int, db: Session = Depends(get_db)):
     admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
+
+    #Check if admin exists
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")
+
+
     db.delete(admin)
     db.commit()
     return {"message": "Admin deleted successfully"}
@@ -45,36 +55,48 @@ def delete_user(admin_id: int, db: Session = Depends(get_db)):
 #Get admin by username
 @router.get("/username/{admin_name}", response_model=AdminOut)
 def get_user(admin_name: str, db: Session = Depends(get_db)):
+
+    #Check if admin exists
     admin = db.query(AdminUser).filter(AdminUser.username == admin_name).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")
+
     return admin
 
 #Get admin by id
 @router.get("/id/{admin_id}", response_model=AdminOut)
 def get_user(admin_id: int, db: Session = Depends(get_db)):
+
+    #Check if admin exists
     admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")
+
     return admin
 
 #Get admin by email
 @router.get("/email/{user_email}", response_model=AdminOut)
 def get_user(user_email: str, db: Session = Depends(get_db)):
+
+    #Check if admin exists
     admin = db.query(AdminUser).filter(AdminUser.email == user_email).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")
+
     return admin
 
 #Check if admin exists
 @router.get("/{admin_name}/exists", response_model=dict)
 def check_user_exists(admin_name: str, db: Session = Depends(get_db)):
+
     admin = db.query(AdminUser).filter(AdminUser.username == admin_name).first()
     return {"exists": admin is not None}
 
 #Login and get admin credentials
 @router.post("/login/", response_model=AdminBase)
 def login(email: str, password: str, db: Session = Depends(get_db)):
+
+    #Check if credentials are correct
     admin = db.query(AdminUser).filter(AdminUser.email == email).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Invalid email or password")
