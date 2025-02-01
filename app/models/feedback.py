@@ -12,4 +12,4 @@ class Feedback(Base):
     description = Column(Text)
     feedback_date = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="feedback")
+    user = relationship("User", back_populates="feedbacks")
