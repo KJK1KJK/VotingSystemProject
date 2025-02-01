@@ -5,9 +5,16 @@ from typing import Optional
 class VotingSessionBase(BaseModel):
     title: str
     description: Optional[str] = None
+    whitelist: Optional[bool] = False
 
 class VotingSessionCreate(VotingSessionBase):
     pass
+
+class VotingSessionUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    is_published: Optional[bool] = None
+    whitelist: Optional[bool] = None 
 
 class VotingSessionResponse(VotingSessionBase):
     id: int
