@@ -7,6 +7,7 @@ import SignUp from './SignUp';
 import Polls from './Polls';
 import MyPolls from './MyPolls';
 import About from './About';
+import PollResults from './pollResults';
 
 
 const MainScreen = ({polls,setPolls}) => {
@@ -44,6 +45,7 @@ const MainScreen = ({polls,setPolls}) => {
           <Route path="/polls" element={<Polls />} />
           <Route path="/mypolls" element={<MyPolls />} />
           <Route path="/about" element={<About />} />
+          <Route path="/results" element={<PollResults />} />
 
           {/* Next things we gona add here . but ig i added everything*/}
         </Routes>
