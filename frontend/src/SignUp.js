@@ -6,21 +6,23 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");  
+  const [errorMessage, setErrorMessage] = useState("");  
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3001/signup", {
-        method: "POST",
+      const response = await fetch('http://127.0.0.1:8000/api/users/', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
         },
         body: JSON.stringify({
-          email: email,
           username: username,
+          email: email, 
           password: password,
         }),
       });
@@ -28,12 +30,15 @@ const SignUp = () => {
       const data = await response.json();
 
       if (response.ok) {
-        navigate("/"); 
+        setSuccessMessage('Account created successfully! Redirecting to sign-in...');
+        setTimeout(() => {
+          navigate('/signin');  
+        }, 1500);
       } else {
-        setErrorMessage(data.detail || "An error occurred during signup."); 
+        setErrorMessage(data.detail || 'An error occurred during sign-up.');
       }
     } catch (error) {
-      setErrorMessage("An error occurred. Please try again."); 
+      setErrorMessage('An error occurred while connecting to the server.');
     }
   };
 
@@ -57,6 +62,7 @@ const SignUp = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
               style={styles.input}
+              required
             />
           </div>
 
@@ -71,6 +77,7 @@ const SignUp = () => {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
               style={styles.input}
+              required
             />
           </div>
 
@@ -85,12 +92,12 @@ const SignUp = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               style={styles.input}
+              required
             />
           </div>
 
-          {errorMessage && (
-            <div style={styles.errorMessage}>{errorMessage}</div>
-          )}
+          {successMessage && <div style={styles.successMessage}>{successMessage}</div>}
+          {errorMessage && <div style={styles.errorMessage}>{errorMessage}</div>}
 
           <button type="submit" style={styles.loginButton}>
             Sign Up
@@ -181,6 +188,11 @@ const styles = {
   },
   errorMessage: {
     color: "red",
+    textAlign: "center",
+    marginBottom: "10px",
+  },
+  successMessage: {
+    color: "green",
     textAlign: "center",
     marginBottom: "10px",
   },

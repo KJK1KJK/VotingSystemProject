@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import logo from './images/logo.webp';
 
 const SignIn = () => {
-  const [username, setUsername] = useState('');
+  const [mail, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState(''); 
@@ -12,29 +12,34 @@ const SignIn = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     
-    const response = await fetch('http://localhost:3001/signin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    });
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/users/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+        },
+        body: JSON.stringify({
+          email: mail, 
+          password: password, 
+        }),
+      });
+        
 
-    const data = await response.json();
+      const data = await response.json();
+      console.log(data)
 
-    if (response.ok) {
-      
-      setSuccessMessage('Succesful login!');
-      localStorage.setItem('token', data.token);
-      setTimeout(() => {
-        navigate(''); 
-      }, 1500); 
-    } else {
-      
-      setErrorMessage(data.detail || 'An error happened');
+      if (response.ok) {
+        setSuccessMessage('Successful login!');
+        localStorage.setItem('token', data.token);
+        setTimeout(() => {
+          navigate('/'); 
+        }, 1500); 
+      } else {
+        setErrorMessage(data.detail || 'An error occurred during login.');
+      }
+    } catch (error) {
+      setErrorMessage('An error occurred while connecting to the server.');
     }
   };
 
@@ -55,8 +60,8 @@ const SignIn = () => {
             <label htmlFor="username" style={styles.label}>Username or email address</label>
             <input
               type="text"
-              id="username"
-              value={username}
+              id="mail"
+              value={mail}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username or email address"
               style={styles.input}
@@ -117,7 +122,7 @@ const styles = {
   },
   loginContainer: {
     width: '100%',
-    maxWidth: '500px', //I made a little bit bigger ziyad suggestion
+    maxWidth: '500px',
     padding: '40px',
     border: '1px solid #ccc',
     borderRadius: '10px',
