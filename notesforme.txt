@@ -1,4 +1,0 @@
-admin ma login w URL w POST
-feedback route nie istnieje w mainie
-session_search_routes nie istnieje w mainie
-voting_session_routes
