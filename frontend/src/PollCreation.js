@@ -3,26 +3,26 @@ import React, { useState } from 'react';
 const PollCreation = ({ onClose, onCreatePoll }) => {
   const [questions, setQuestions] = useState([]);
 
-  // Yeni soru ekleme
+  
   const handleAddQuestion = () => {
     setQuestions([...questions, { text: '', type: 'text', options: [] }]);
   };
 
-  // Sorunun metnini güncelleme
+  
   const handleQuestionChange = (index, text) => {
     const newQuestions = [...questions];
     newQuestions[index].text = text;
     setQuestions(newQuestions);
   };
 
-  // Anketi oluşturma
+  
   const handleCreate = () => {
     if (questions.length === 0) {
       alert("Lütfen en az bir soru ekleyin.");
       return;
     }
     onCreatePoll(questions);
-    onClose(); // Pencereyi kapat
+    onClose(); 
   };
 
   return (

@@ -19,7 +19,9 @@ class UserOut(UserBase):
     class Config:
         from_attributes = True
 
-
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 #Admin schema
 class AdminBase(BaseModel):
     username: str
