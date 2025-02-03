@@ -3,26 +3,28 @@ import React, { useState } from 'react';
 const PollCreation = ({ onClose, onCreatePoll }) => {
   const [questions, setQuestions] = useState([]);
 
-  // Yeni soru ekleme
+  // Add a new question
   const handleAddQuestion = () => {
-    setQuestions([...questions, { text: '', type: 'text', options: [] }]);
+    setQuestions(prevQuestions => [...prevQuestions, { text: '', type: 'text', options: [] }]);
   };
 
-  // Sorunun metnini güncelleme
+  // Update question text
   const handleQuestionChange = (index, text) => {
-    const newQuestions = [...questions];
-    newQuestions[index].text = text;
-    setQuestions(newQuestions);
+    setQuestions(prevQuestions => {
+      const updatedQuestions = [...prevQuestions];
+      updatedQuestions[index].text = text;
+      return updatedQuestions;
+    });
   };
 
-  // Anketi oluşturma
+  // Handle poll submission
   const handleCreate = () => {
     if (questions.length === 0) {
-      alert("Lütfen en az bir soru ekleyin.");
+      alert("Please add at least one question.");
       return;
     }
-    onCreatePoll(questions);
-    onClose(); // Pencereyi kapat
+    onCreatePoll(questions);  // Pass questions to parent component
+    onClose();  // Close the modal
   };
 
   return (

@@ -1,27 +1,43 @@
 import React, { useState } from 'react';
 
-const MyPolls = ({ polls = [], setPolls }) => {
+const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   const [newPoll, setNewPoll] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
 
+  // Add a new option field
   const handleAddOption = () => {
-    setOptions([...options, ""]);
+    if (options[options.length - 1].trim()) {
+      setOptions(prevOptions => [...prevOptions, ""]);
+    } else {
+      alert("Please fill in the previous option before adding a new one.");
+    }
   };
 
+  // Handle option text change
   const handleOptionChange = (index, value) => {
-    const updatedOptions = [...options];
-    updatedOptions[index] = value;
-    setOptions(updatedOptions);
+    setOptions(prevOptions => {
+      const updatedOptions = [...prevOptions];
+      updatedOptions[index] = value;
+      return updatedOptions;
+    });
   };
 
+  // Function to create and submit a new poll
   const handlePollSubmit = () => {
     // Validate inputs
-    if (!newPoll.trim() || !newQuestion.trim() || options.some(option => !option.trim())) {
-      alert("Please fill out all fields and ensure all options are filled.");
+    if (!newPoll.trim()) {
+      alert("Poll title is required.");
       return;
     }
-
+    if (!newQuestion.trim()) {
+      alert("Poll question is required.");
+      return;
+    }
+    if (options.some(option => !option.trim())) {
+      alert("Please fill out all options.");
+      return;
+    }
     if (options.length < 2) {
       alert("Please add at least two options.");
       return;
@@ -29,19 +45,24 @@ const MyPolls = ({ polls = [], setPolls }) => {
 
     // Create new poll data
     const newPollData = {
+      id: polls.length + 1,  // Assign a unique ID
       title: newPoll,
       questions: [
         {
           text: newQuestion,
-          options: options,
+          options,
         },
       ],
     };
 
-    // Update polls state
-    setPolls([...polls, newPollData]);
+    // Update polls state safely using previous state
+    if (typeof setPolls === "function") {
+      setPolls(prevPolls => [...prevPolls, newPollData]);
+    } else {
+      console.error("setPolls is not a function! Ensure it is passed as a prop.");
+    }
 
-    // Reset form
+    // Reset form fields
     setNewPoll("");
     setNewQuestion("");
     setOptions(["", ""]);
@@ -50,6 +71,7 @@ const MyPolls = ({ polls = [], setPolls }) => {
   return (
     <div style={styles.container}>
       <h2>Create Poll</h2>
+      
       <div>
         <input
           type="text"
@@ -59,6 +81,7 @@ const MyPolls = ({ polls = [], setPolls }) => {
           style={styles.input}
         />
       </div>
+
       <div>
         <input
           type="text"
@@ -68,6 +91,7 @@ const MyPolls = ({ polls = [], setPolls }) => {
           style={styles.input}
         />
       </div>
+
       <div>
         {options.map((option, index) => (
           <div key={index} style={styles.optionContainer}>
@@ -82,30 +106,37 @@ const MyPolls = ({ polls = [], setPolls }) => {
         ))}
         <button onClick={handleAddOption} style={styles.addButton}>Add Option</button>
       </div>
+
       <button onClick={handlePollSubmit} style={styles.submitButton}>Submit Poll</button>
 
+      {/* Display Created Polls */}
       <div>
         <h3>Your Polls</h3>
-        {polls.map((poll, index) => (
-          <div key={index} style={styles.pollContainer}>
-            <h4>{poll.title}</h4>
-            {poll.questions.map((question, qIndex) => (
-              <div key={qIndex}>
-                <p>{question.text}</p>
-                <ul>
-                  {question.options.map((option, oIndex) => (
-                    <li key={oIndex}>{option}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        ))}
+        {polls.length === 0 ? (
+          <p>No polls created yet.</p>
+        ) : (
+          polls.map((poll, index) => (
+            <div key={index} style={styles.pollContainer}>
+              <h4>{poll.title}</h4>
+              {poll.questions.map((question, qIndex) => (
+                <div key={qIndex}>
+                  <p><strong>Q{qIndex + 1}:</strong> {question.text}</p>
+                  <ul>
+                    {question.options.map((option, oIndex) => (
+                      <li key={oIndex}>{option}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 };
 
+// Styles for the component
 const styles = {
   container: {
     padding: '20px',
