@@ -14,6 +14,7 @@ from app.routes.answer_routes import router as answer_router
 from app.routes.candidate_routes import router as candidate_router
 from app.routes.vote_routes import router as vote_router
 from app.routes.whitelist_routes import router as whitelist_router
+from app.routes.feedback_routes import router as feedback_router
 
 #Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -41,3 +42,4 @@ app.include_router(answer_router, prefix="/api/answers", tags=["Answers"])
 app.include_router(candidate_router, prefix="/api/candidates", tags=["Candidates"])
 app.include_router(vote_router, prefix="/api/votes", tags=["Votes"])
 app.include_router(whitelist_router, prefix="/api/whitelist", tags=["Whitelist"])
+app.include_router(feedback_router, prefix="/api/feedback", tags=["Feedback"])

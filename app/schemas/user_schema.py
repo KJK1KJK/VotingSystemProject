@@ -8,6 +8,9 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class LoginRequest(BaseModel):
+    pass
+
 class UserOut(UserBase):
     id: int
     time_created: datetime
