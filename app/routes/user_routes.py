@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.services.database import get_db
 from app.models import User
-from app.schemas.user_schema import UserCreate, UserOut, UserBase
+from app.schemas.user_schema import UserCreate, UserOut, UserBase, LoginRequest
 from passlib.hash import bcrypt
 
 router = APIRouter()
@@ -86,11 +86,10 @@ def check_user_exists(user_name: str, db: Session = Depends(get_db)):
     return {"exists": user is not None}
 
 #Login and get user credentials
-
 @router.post("/login/", response_model=UserBase)
-def login(request: UserBase, db: Session = Depends(get_db)):
+def login(request: LoginRequest, db: Session = Depends(get_db)):
 
-    # Check if credentials are correct
+    #Check if credentials are correct
     user = db.query(User).filter(User.email == request.email).first()
     if not user or not bcrypt.verify(request.password, user.password):
         raise HTTPException(status_code=404, detail="Invalid email or password")

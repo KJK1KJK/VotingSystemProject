@@ -1,7 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Polls = () => {
+
+  const navigate = useNavigate();
+
   const [polls, setPolls] = useState([
     { id: 1, title: 'Adrian' },
     { id: 2, title: 'Kacper' },
@@ -58,9 +62,14 @@ const Polls = () => {
       checkboxes: checkboxes.filter((cb) => cb.checked).map((cb) => cb.label),
       selectedRadio,
     };
+  
+    localStorage.setItem('pollResponses', JSON.stringify(responses)); // Store responses
     console.log('Poll Responses:', responses);
     alert('Thank you for participating in the poll!');
+    navigate('/results'); // Navigate to results page
   };
+  
+  
 
   const handleSearch = (e) => {
     const term = e.target.value;
