@@ -87,9 +87,9 @@ def check_user_exists(user_name: str, db: Session = Depends(get_db)):
 
 #Login and get user credentials
 @router.post("/login/", response_model=UserBase)
-def login(request: UserBase, db: Session = Depends(get_db)):
+def login(request: LoginRequest, db: Session = Depends(get_db)):
 
-    # Check if credentials are correct
+    #Check if credentials are correct
     user = db.query(User).filter(User.email == request.email).first()
     if not user or not bcrypt.verify(request.password, user.password):
         raise HTTPException(status_code=404, detail="Invalid email or password")
