@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; 
+import { data, Link, useNavigate } from 'react-router-dom'; 
 import logo from './images/logo.webp';
 
 const SignIn = () => {
@@ -13,7 +13,7 @@ const SignIn = () => {
     event.preventDefault();
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/users/login/`, {
+      const response = await fetch('http://127.0.0.1:8000/api/users/login/' ,{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,9 +25,10 @@ const SignIn = () => {
         }),
       });
         
-
+      console.log(response)
       const data = await response.json();
       console.log(data)
+      
 
       if (response.ok) {
         setSuccessMessage('Successful login!');
@@ -40,7 +41,9 @@ const SignIn = () => {
       }
     } catch (error) {
       setErrorMessage('An error occurred while connecting to the server.');
+      
     }
+    
   };
 
   return (
