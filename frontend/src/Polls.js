@@ -12,7 +12,7 @@ const Polls = () => {
   const [questions, setQuestions] = useState([]);
   const [hasJoinedPoll, setHasJoinedPoll] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [userId, setUserId] = useState({id});
+  const [userId, setUserId] = useState();
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId"); 
@@ -20,7 +20,7 @@ const Polls = () => {
     if (storedUserId) {
       setUserId(storedUserId); 
     } else {
-      fetch(`${API_BASE_URL}/users/${id}`) 
+      fetch("${API_BASE_URL}/users/id/${user_id}") 
         .then((res) => {
           if (!res.ok) {
             throw new Error("Failed to fetch user");
@@ -101,7 +101,6 @@ const Polls = () => {
     }
   };
 
-  
   const handleSelectCandidate = (candidateId) => {
     setSelectedCandidate(candidateId);
   };

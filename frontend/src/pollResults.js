@@ -14,7 +14,7 @@ const PollResults = () => {
   const [totalVotes, setTotalVotes] = useState(0);
   const navigate = useNavigate();
   const { sessionId } = useParams(); 
-s
+
   useEffect(() => {
     fetchPollResults();
   }, []);
@@ -42,7 +42,7 @@ s
     }
   };
 
-  
+
   const processVotes = (votes) => {
     const voteCounts = {};
     let total = 0;
