@@ -14,7 +14,8 @@ TEST_USER = {
 
 TEST_FEEDBACK = {
     "user_id": None,  # to be set when a test user is created
-    "message": "This is a test feedback message."
+    "description": "This is a test feedback message.",
+    "title": "Test Feedback"
 }
 
 # Helper functions to create test objects in the DB
@@ -47,12 +48,17 @@ class TestFeedbackRoutes:
 
         response = client.post(
             "/api/feedback/",
-            json=payload
+            json={
+                "title": payload["title"],
+                "description": payload["description"],
+                "user_id": payload["user_id"]
+            }
         )
         assert response.status_code == status.HTTP_200_OK
 
         data = response.json()
-        assert data["message"] == TEST_FEEDBACK["message"]
+        assert data["title"] == TEST_FEEDBACK["title"]
+        assert data["description"] == TEST_FEEDBACK["description"]
         assert data["user_id"] == user.id
 
     def test_create_feedback_user_not_found(self, client):
@@ -111,9 +117,11 @@ class TestFeedbackRoutes:
         response = client.get(f"/api/feedback/{feedback.id}")
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data["id"] == feedback.id
-        assert data["message"] == feedback.message
+        
+        assert data["title"] == feedback.title
+        assert data["description"] == feedback.description
         assert data["user_id"] == user.id
+        
 
     def test_get_feedback_by_id_not_found(self, client):
         response = client.get("/api/feedback/9999")

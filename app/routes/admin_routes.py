@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.services.database import get_db
 from app.models import AdminUser
-from app.schemas.user_schema import AdminCreate, AdminOut, AdminBase
+from app.schemas.user_schema import AdminCreate, AdminOut, AdminBase, LoginRequest
 from passlib.hash import bcrypt
 
 router = APIRouter()
@@ -94,12 +94,12 @@ def check_user_exists(admin_name: str, db: Session = Depends(get_db)):
 
 #Login and get admin credentials
 @router.post("/login/", response_model=AdminBase)
-def login(email: str, password: str, db: Session = Depends(get_db)):
+def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     #Check if credentials are correct
-    admin = db.query(AdminUser).filter(AdminUser.email == email).first()
+    admin = db.query(AdminUser).filter(AdminUser.email == request.email).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Invalid email or password")
-    if not bcrypt.verify(password, admin.password):
+    if not bcrypt.verify(request.password, admin.password):
         raise HTTPException(status_code=404, detail="Invalid email or password")
     return {"username": admin.username, "email": admin.email}

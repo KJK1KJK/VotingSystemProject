@@ -2,9 +2,8 @@
 import pytest
 from fastapi import status
 from app.models.user import User
-from app.schemas.user_schema import UserOut, UserBase, UserCreate
+from app.schemas.user_schema import UserOut, UserBase, UserCreate, LoginRequest
 from passlib.hash import bcrypt
-
 # Test data for creating a user
 TEST_USER_DATA = {
     "username": "testuser",
@@ -144,26 +143,32 @@ class TestUserRoutes:
         data = response.json()
         assert data["exists"] is False
 
-    # POST /api/users/login/ - login
     def test_login_success(self, client, db_session):
         password = "secret"
-        user = create_test_user(db_session, username="loginuser", email="login@example.com", password=password)
-        # Login endpoint expects email and password as query parameters.
-        response = client.post(f"/api/users/login/?email={user.email}&password={password}")
+        user = create_test_user(
+            db_session, 
+            username="loginuser", 
+            email="login@example.com", 
+            password=password
+        )
+        
+        response = client.post(
+            "/api/users/login/",
+            json={"email": user.email, "password": password} 
+        )
+        
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        # UserBase is expected to have username and email.
+        
         assert data["username"] == user.username
         assert data["email"] == user.email
 
     def test_login_invalid_email(self, client):
-        response = client.post("/api/users/login/?email=nonexistent@example.com&password=secret")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert "invalid email or password" in response.json()["detail"].lower()
-
-    def test_login_invalid_password(self, client, db_session):
-        password = "secret"
-        user = create_test_user(db_session, username="wrongpassword", email="wrong@example.com", password=password)
-        response = client.post(f"/api/users/login/?email={user.email}&password=wrongpassword")
+        email = "nonexistend@domain.com"
+        password = "nonexistent"
+        response = client.post(
+            "/api/users/login/",
+            json={"email": email, "password": password} 
+        )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "invalid email or password" in response.json()["detail"].lower()

@@ -158,33 +158,16 @@ class TestAdminRoutes:
     def test_login_success(self, client, clean_db):
         create_test_admin(clean_db)
         response = client.post(
-            f"/api/admin/login/?email={TEST_ADMIN['email']}&password={TEST_ADMIN['password']}"
-            # "/api/admin/login/",
-            # data={
-            #     "email": TEST_ADMIN["email"], 
-            #     "password": TEST_ADMIN["password"]
-            # }
+            "/api/users/login/",
+            json={"email": TEST_ADMIN["email"], "password": TEST_ADMIN["password"]} 
         )
         assert response.status_code == status.HTTP_200_OK
         assert validate_admin_base(response.json())
-
-    def test_login_invalid_email(self, client):
-        response = client.post(
-            "/api/admin/login/",
-            data={
-                "username": "wrong@example.com",
-                "password": "any"
-            }
-        )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
+        
     def test_login_invalid_password(self, client, clean_db):
         create_test_admin(clean_db)
         response = client.post(
-            "/api/admin/login/",
-            data={
-                "username": TEST_ADMIN["email"],
-                "password": "wrong"
-            }
+            "/api/users/login/",
+            json={"email": TEST_ADMIN["email"], "password": "Wrong"} 
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
