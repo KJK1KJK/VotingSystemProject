@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 
 const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   
@@ -6,27 +7,42 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   const [questions, setQuestions] = useState([
     { text: "", options: ["", ""] }, 
   ]);
-  const [timeLimit, setTimeLimit] = useState("");
-  const [pollType, setPollType] = useState("public");
-  const [pollPassword, setPollPassword] = useState("");
+    const [userId, setUserId] = useState(null);
+    const username = Cookies.get('username');
 
   
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/questions/${sesions_id}/questions');
-        if (!response.ok) {
-          throw new Error("Failed to fetch questions.");
-        }
-        const questionsData = await response.json();
-        setQuestions(questionsData);
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
+    useEffect(() => {
+        const fetchPolls = async () => {
+            try {
+                const userResponse = await fetch(`http://127.0.0.1:8000/api/users/username/${username}/drafts`, {
+                    headers: {
+                        'accept': 'application/json',
+                    },
+                });
+                if (!userResponse.ok) {
+                    throw new Error("Failed to fetch user Id.");
+                }
 
-    fetchQuestions();
-  }, []);
+                const userData = await userResponse.json();
+                setUserId(userData.id)
+
+                const response = await fetch(`http://127.0.0.1:8000/api/voting-sessions/user/${userId}/drafts`, {
+                    headers: {
+                        'accept': 'application/json',
+                    },
+                });
+                if (!response.ok) {
+                    throw new Error("Failed to fetch polls.");
+                }
+                const pollsData = await response.json();
+                setPolls(pollsData);
+            } catch (error) {
+                console.error(error.message);
+            }
+        };
+
+        fetchPolls();
+    }, [userId, setPolls]);
 
   const handleAddOption = (questionIndex) => {
     const lastOption = questions[questionIndex].options[questions[questionIndex].options.length - 1];
@@ -84,34 +100,19 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
       return;
     }
 
-    if (!timeLimit || isNaN(timeLimit) || timeLimit <= 0) {
-      alert("Please enter a valid time limit in minutes.");
-      return;
-    }
-
-    const expirationTime = new Date();
-    expirationTime.setMinutes(expirationTime.getMinutes() + parseInt(timeLimit)); 
-
-    let password = null;
-    if (pollType === "private") {
-      password = Math.random().toString(36).slice(2, 8);
-      setPollPassword(password);  
-    }
-
     const sessionData = {
       title: newPoll,
-      questions,
-      expiration: expirationTime.toISOString(), 
-      type: pollType,
-      password,
+      description: "",
+      whitelist: false,
     };
 
     try {
       
       
-      const sessionResponse = await fetch("http://127.0.0.1:8000/api/voting-sessions/", {
+      const sessionResponse = await fetch(`http://127.0.0.1:8000/api/voting-sessions/?creator_id=${userId}`, {
         method: "POST",
         headers: {
+          "accept": "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(sessionData),
@@ -126,14 +127,17 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
 
       
       for (const question of questions) {
-        const questionData = {
-          text: question.text,
-          options: question.options,
-        };
+         const questionData = {
+             type: "string",
+             title: question.text,
+             description: "string",
+             is_quiz: false,
+         };
 
-        const questionResponse = await fetch("http://127.0.0.1:8000/api/questions/${sesion_id}/questions/", {
+        const questionResponse = await fetch(`http://127.0.0.1:8000/api/questions/${sessionId}/questions/`, {
           method: "POST",
           headers: {
+            "accept": "application/json",
             "Content-Type": "application/json",
           },
           body: JSON.stringify(questionData),
@@ -141,6 +145,29 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
 
         if (!questionResponse.ok) {
           throw new Error("Failed to create question.");
+        }
+
+        const questionResult = await questionResponse.json();
+        const questionId = questionResult.id;
+
+        for (const option of question.options) {
+          const optionData = {
+            name: option,
+            description: "string",
+            user_input: "",
+            };
+          const optionResponse = await fetch(`http://127.0.0.1:8000/api/candidates/${questionId}/candidates/`, {
+            method: "POST",
+            headers: {
+              "accept": "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(optionData),
+          });
+
+          if (!optionResponse.ok) {
+            throw new Error("Failed to create option.");
+          }
         }
       }
 
@@ -152,8 +179,6 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
      
       setNewPoll("");
       setQuestions([{ text: "", options: ["", ""] }]);
-      setTimeLimit("");
-      setPollPassword("");
     } catch (error) {
       console.error(error.message);
       alert("An error occurred while submitting the poll.");
@@ -217,38 +242,13 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
           </button>
         </div>
       ))}
+      <br></br>
 
       <button onClick={handleAddQuestion} style={styles.addButton}>Add Question</button>
-
-      <div>
-        <input
-          type="number"
-          placeholder="Time Limit (in minutes)"
-          value={timeLimit}
-          onChange={(e) => setTimeLimit(e.target.value)}
-          style={styles.input}
-        />
-      </div>
-
-      <div>
-        <select
-          value={pollType}
-          onChange={(e) => setPollType(e.target.value)}
-          style={styles.input}
-        >
-          <option value="public">Public Poll</option>
-          <option value="private">Private Poll</option>
-        </select>
-      </div>
-
-      {pollType === "private" && (
-        <div>
-          <label>Private Poll Password: {pollPassword}</label>
-        </div>
-      )}
+      <br></br>
 
       <button onClick={handlePollSubmit} style={styles.submitButton}>Submit Poll</button>
-
+      <br></br>
       
       <div>
         <h3>Your Polls</h3>

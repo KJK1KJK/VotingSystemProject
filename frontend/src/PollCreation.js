@@ -3,12 +3,10 @@ import React, { useState } from 'react';
 const PollCreation = ({ onClose, onCreatePoll }) => {
   const [questions, setQuestions] = useState([]);
 
-  // Yeni soru ekleme
   const handleAddQuestion = () => {
     setQuestions(prevQuestions => [...prevQuestions, { text: '', type: 'text', options: [] }]);
   };
 
-  // Sorunun metnini güncelleme
   const handleQuestionChange = (index, text) => {
     setQuestions(prevQuestions => {
       const updatedQuestions = [...prevQuestions];
@@ -17,14 +15,13 @@ const PollCreation = ({ onClose, onCreatePoll }) => {
     });
   };
 
-  // Anketi oluşturma
   const handleCreate = () => {
     if (questions.length === 0) {
       alert("Please add at least one question.");
       return;
     }
     onCreatePoll(questions);
-    onClose(); // Pencereyi kapat
+    onClose();
   };
 
   return (
