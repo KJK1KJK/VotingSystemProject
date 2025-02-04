@@ -94,4 +94,4 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user or not bcrypt.verify(request.password, user.password):
         raise HTTPException(status_code=404, detail="Invalid email or password")
 
-    return {"username": user.username, "email": user.email}
+    return {"username": user.username, "email": user.email, "id": user.id}
