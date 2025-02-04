@@ -69,12 +69,34 @@
     <Folder Include="app\utils\" />
     <Folder Include="app\services\" />
     <Folder Include="app\routes\" />
+    <Folder Include="frontend\" />
+    <Folder Include="frontend\src\" />
+    <Folder Include="frontend\src\images\" />
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".env" />
     <Content Include=".gitattributes" />
     <Content Include=".gitignore" />
+    <Content Include="frontend\src\About.js" />
+    <Content Include="frontend\src\App.css" />
+    <Content Include="frontend\src\App.js" />
+    <Content Include="frontend\src\App.test.js" />
+    <Content Include="frontend\src\Home.js" />
+    <Content Include="frontend\src\images\avatari.png" />
+    <Content Include="frontend\src\images\logo.webp" />
+    <Content Include="frontend\src\index.css" />
+    <Content Include="frontend\src\index.js" />
+    <Content Include="frontend\src\logo.svg" />
+    <Content Include="frontend\src\MainScreen.js" />
+    <Content Include="frontend\src\MyPolls.js" />
+    <Content Include="frontend\src\PollCreation.js" />
+    <Content Include="frontend\src\pollResults.js" />
+    <Content Include="frontend\src\Polls.js" />
+    <Content Include="frontend\src\reportWebVitals.js" />
+    <Content Include="frontend\src\setupTests.js" />
+    <Content Include="frontend\src\SignIn.js" />
+    <Content Include="frontend\src\SignUp.js" />
     <Content Include="LICENSE.txt" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />

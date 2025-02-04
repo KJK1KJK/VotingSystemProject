@@ -92,6 +92,10 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     #Check if credentials are correct
     user = db.query(User).filter(User.email == request.email).first()
     if not user or not bcrypt.verify(request.password, user.password):
-        raise HTTPException(status_code=404, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    return {"username": user.username, "email": user.email}
+    return UserBase(username=user.username, email=user.email)
+
+@router.options("/login/")
+async def login_options():
+    return {"message": "Preflight request handled"}

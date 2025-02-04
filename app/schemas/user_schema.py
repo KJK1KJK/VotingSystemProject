@@ -19,15 +19,16 @@ class UserOut(UserBase):
     class Config:
         from_attributes = True
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
 #Admin schema
 class AdminBase(BaseModel):
     username: str
     email: EmailStr
 
 class AdminCreate(UserBase):
+    password: str
+
+class AdminLoginRequest(BaseModel):
+    email: EmailStr
     password: str
 
 class AdminOut(UserBase):

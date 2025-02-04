@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Security, HTTPException, Depends
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.database import Base, engine
 from app.middleware import api_key_middleware
@@ -17,25 +18,34 @@ from app.routes.whitelist_routes import router as whitelist_router
 from app.routes.feedback_routes import router as feedback_router
 from app.routes.session_search_routes import router as search_router
 
-#Base.metadata.drop_all(bind=engine)
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
-#exit()
+
 
 app = FastAPI()
 
-#Uncomment the api keys line if you want to enable authentication!
 
-# Apply API key verification to all API routes
-#app.middleware("http")(api_key_middleware)
+#Add CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #A root route to handle "/"
 @app.get("/")
 def home():
     return {"message": "Welcome to the Voting System API!"}
 
+@app.get("/test-cors")
+def test_cors():
+    return {"message": "CORS is working!"}
+
 app.include_router(user_router, prefix="/api/users", tags=["Users"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Admins"])
-#app.include_router(api_key_router, prefix="/api", tags=["API Keys"])
+app.include_router(api_key_router, prefix="/api", tags=["API Keys"])
 app.include_router(voting_session_router, prefix="/api/voting-sessions", tags=["Voting Sessions"])
 app.include_router(session_settings_router, prefix="/api/session-settings", tags=["Session Settings"])
 app.include_router(question_router, prefix="/api/questions", tags=["Questions"])

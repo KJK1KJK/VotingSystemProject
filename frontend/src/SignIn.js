@@ -13,19 +13,21 @@ const SignIn = () => {
     event.preventDefault();
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/users/login/' ,{
-        method: 'POST',
+
+      const response = await fetch('http://localhost:8000/api/users/login/' ,{
+          method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'accept': 'application/json',
+          'accept': 'application/json'
         },
         body: JSON.stringify({
           email: mail, 
           password: password, 
         }),
+        credentials: "include",
       });
         
-      console.log(response)
+      //console.log(response)
       const data = await response.json();
       console.log(data)
       
@@ -37,7 +39,13 @@ const SignIn = () => {
           navigate('/'); 
         }, 1500); 
       } else {
-        setErrorMessage(data.detail || 'An error occurred during login.');
+          if (data.detail) {
+              setErrorMessage(data.detail); // Use the error message from the backend
+          } else if (data.msg) {
+              setErrorMessage(data.msg); // Handle validation errors
+          } else {
+              setErrorMessage('An error occurred during login.');
+          }
       }
     } catch (error) {
       setErrorMessage('An error occurred while connecting to the server.');
@@ -60,7 +68,7 @@ const SignIn = () => {
         <h2 style={styles.loginTitle}>Sign In</h2>
         <form style={styles.form} onSubmit={handleSubmit}>
           <div style={styles.inputGroup}>
-            <label htmlFor="username" style={styles.label}>Username or email address</label>
+            <label htmlFor="username" style={styles.label}>Email address</label>
             <input
               type="text"
               id="mail"
