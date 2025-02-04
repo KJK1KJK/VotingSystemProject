@@ -27,7 +27,6 @@ def create_voting_session(
         title=session_data.title,
         description=session_data.description,
         creator_id=creator_id,
-        whitelist = session_data.whitelist
     )
     db.add(new_session)
     db.commit()

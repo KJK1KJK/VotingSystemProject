@@ -33,7 +33,18 @@ const SignIn = ({ setUsername }) => {
         localStorage.setItem('token', data.token);
         setUsername(data.username);
         Cookies.set('username', data.username); 
-        Cookies.set('userId', data.id); 
+        
+        const userResponse = await fetch(`http://127.0.0.1:8000/api/users/username/${data.username}`, {
+          headers: {
+              'accept': 'application/json',
+          },
+        });
+        if (!userResponse.ok) {
+            throw new Error("Failed to fetch user Id.");
+        }
+        const userData = await userResponse.json();
+        
+        Cookies.set('userId', userData.id); 
         setTimeout(() => {
           navigate('/'); 
         }, 1500); 

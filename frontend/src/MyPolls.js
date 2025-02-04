@@ -9,24 +9,27 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   ]);
     const [userId, setUserId] = useState(null);
     const username = Cookies.get('username');
-
-  
+    console.log("FIRST LOG: "+username);
+    
     useEffect(() => {
         const fetchPolls = async () => {
             try {
-                const userResponse = await fetch(`http://127.0.0.1:8000/api/users/username/${username}/drafts`, {
+                console.log("SECOND LOG: "+username);
+                const userResponse = await fetch(`http://127.0.0.1:8000/api/users/username/${username}`, {
                     headers: {
                         'accept': 'application/json',
                     },
                 });
+                
                 if (!userResponse.ok) {
                     throw new Error("Failed to fetch user Id.");
                 }
 
                 const userData = await userResponse.json();
-                setUserId(userData.id)
+                setUserId(userData.id);
 
-                const response = await fetch(`http://127.0.0.1:8000/api/voting-sessions/user/${userId}/drafts`, {
+                console.log("THIRD LOG: "+userData.id);
+                const response = await fetch(`http://127.0.0.1:8000/api/voting-sessions/user/${Cookies.get("userId")}/drafts`, {
                     headers: {
                         'accept': 'application/json',
                     },

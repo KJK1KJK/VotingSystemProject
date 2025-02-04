@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
 
 const API_BASE_URL = "http://127.0.0.1:8000/api"; 
 
@@ -15,8 +16,9 @@ const Polls = () => {
   const [userId, setUserId] = useState();
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId"); 
-  
+    //const storedUserId = localStorage.getItem("userId"); 
+    const storedUserId = Cookies.get("userId");
+
     if (storedUserId) {
       setUserId(storedUserId); 
     } else {
@@ -116,7 +118,10 @@ const Polls = () => {
       const voteResponse = await fetch(`${API_BASE_URL}/votes/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, candidate_id: selectedCandidate }),
+        body: JSON.stringify({
+          user_id: Number(Cookies.get("userId")),
+          candidate_id: selectedCandidate 
+        }),
       });
 
       if (!voteResponse.ok) {
