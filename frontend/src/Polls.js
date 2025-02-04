@@ -155,9 +155,9 @@ const Polls = () => {
       )}
 
       {/* Polls List */}
-      {!hasJoinedPoll ? (
-        <div style={styles.pollsContainer}>
-          {filteredPolls.map((poll) => (
+      <div style={styles.pollsContainer}>
+        {Array.isArray(filteredPolls) && filteredPolls.length > 0 ? (
+          filteredPolls.map((poll) => (
             <div
               key={poll.id}
               style={{
@@ -168,13 +168,13 @@ const Polls = () => {
             >
               <h3 style={styles.pollTitle}>{poll.title}</h3>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div style={styles.selectedPollContainer}>
-          <h2 style={styles.selectedPollTitle}>{polls.find((p) => p.id === selectedPoll)?.title}</h2>
-        </div>
-      )}
+          ))
+        ) : (
+          <div style={styles.selectedPollContainer}>
+            <h2 style={styles.selectedPollTitle}>{Array.isArray(polls) ? polls.find((p) => p.id === selectedPoll)?.title : ''}</h2>
+          </div>
+        )}
+      </div>
 
       {/* Questions & Candidates List */}
       {selectedPoll && hasJoinedPoll && (
@@ -212,7 +212,7 @@ const Polls = () => {
       )}
     </div>
   );
-};
+}
 
 // Styles
 const styles = {

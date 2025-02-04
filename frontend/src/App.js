@@ -1,14 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MainScreen from './MainScreen';
 
+const App = () => {
+  const [username, setUsername] = useState('');
 
-function App() {
   return (
-    <div>
-      <MainScreen /> 
-      
-    </div>
+    <MainScreen username={username} setUsername={setUsername} />
   );
-}
+};
 
 export default App;

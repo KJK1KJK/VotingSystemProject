@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import Cookies from 'js-cookie';
 import SignIn from './SignIn';
 import Home from './Home'; 
 import avatar from './images/avatari.png';
@@ -9,8 +10,28 @@ import MyPolls from './MyPolls';
 import About from './About';
 import PollResults from './pollResults';
 
+const MainScreen = ({ polls, setPolls }) => {
+  const [username, setUsername] = useState('');
+  const [userId, setUserId] = useState('');
 
-const MainScreen = ({polls,setPolls}) => {
+  useEffect(() => {
+    const storedUsername = Cookies.get('username');
+    const storedUserId = Cookies.get('userId');
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+    if (storedUserId) {
+      setUserId(storedUserId);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    Cookies.remove('username');
+    Cookies.remove('userId');
+    setUsername('');
+    setUserId('');
+  };
+
   return (
     <Router>
       <div style={styles.container}>
@@ -31,23 +52,28 @@ const MainScreen = ({polls,setPolls}) => {
               alt="Avatar"
               style={styles.avatar}
             />
-            <Link to="/signin" style={styles.signInButton}>Sign In</Link>
-            
-            <Link to="/signup" style={styles.signUpButton}>Sign Up</Link>
+            {username ? (
+              <>
+                <span style={styles.username}>{username}</span>
+                <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/signin" style={styles.signInButton}>Sign In</Link>
+                <Link to="/signup" style={styles.signUpButton}>Sign Up</Link>
+              </>
+            )}
           </div>
         </nav>
 
-        
         <Routes>
           <Route path="/" element={<Home />} /> 
-          <Route path="/signin" element={<SignIn />} /> 
+          <Route path="/signin" element={<SignIn setUsername={setUsername} />} /> 
           <Route path="/signup" element={<SignUp />} />
           <Route path="/polls" element={<Polls />} />
           <Route path="/mypolls" element={<MyPolls />} />
           <Route path="/about" element={<About />} />
           <Route path="/results" element={<PollResults />} />
-
-          {/* Next things we gona add here . but ig i added everything*/}
         </Routes>
       </div>
     </Router>
@@ -106,6 +132,21 @@ const styles = {
   signUpButton: {
     padding: '8px 16px',
     backgroundColor: '#28A745',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    fontSize: '14px',
+  },
+  username: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  logoutButton: {
+    padding: '8px 16px',
+    backgroundColor: '#DC3545',
     color: '#fff',
     border: 'none',
     borderRadius: '5px',

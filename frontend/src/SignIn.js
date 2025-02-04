@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { data, Link, useNavigate } from 'react-router-dom'; 
-import logo from './images/logo.webp';
+import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import logo from './images/logo.png';
 
-const SignIn = () => {
-  const [mail, setUsername] = useState('');
+const SignIn = ({ setUsername }) => {
+  const [mail, setMail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState(''); 
-  const navigate = useNavigate(); 
+  const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/users/login/' ,{
+      const response = await fetch('http://127.0.0.1:8000/api/users/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,14 +26,14 @@ const SignIn = () => {
         }),
       });
         
-      console.log(response)
       const data = await response.json();
-      console.log(data)
       
-
       if (response.ok) {
         setSuccessMessage('Successful login!');
         localStorage.setItem('token', data.token);
+        setUsername(data.username);
+        Cookies.set('username', data.username); 
+        Cookies.set('userId', data.id); 
         setTimeout(() => {
           navigate('/'); 
         }, 1500); 
@@ -41,9 +42,7 @@ const SignIn = () => {
       }
     } catch (error) {
       setErrorMessage('An error occurred while connecting to the server.');
-      
     }
-    
   };
 
   return (
@@ -56,58 +55,25 @@ const SignIn = () => {
             style={styles.logo}
           />
         </div>
-
-        <h2 style={styles.loginTitle}>Sign In</h2>
-        <form style={styles.form} onSubmit={handleSubmit}>
-          <div style={styles.inputGroup}>
-            <label htmlFor="username" style={styles.label}>Username or email address</label>
-            <input
-              type="text"
-              id="mail"
-              value={mail}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username or email address"
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label htmlFor="password" style={styles.label}>Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              style={styles.input}
-            />
-          </div>
-
-          {errorMessage && (
-            <div style={styles.errorMessage}>
-              {errorMessage}
-            </div>
-          )}
-
-          {successMessage && (
-            <div style={styles.successMessage}>
-              {successMessage}
-            </div>
-          )}
-
-          <button type="submit" style={styles.loginButton}>Login</button>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={mail}
+            onChange={(e) => setMail(e.target.value)}
+            style={styles.input}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+          />
+          <button type="submit" style={styles.button}>Sign In</button>
         </form>
-
-        <div style={styles.options}>
-          <label style={styles.rememberMe}>
-            <input type="checkbox" /> Remember me
-          </label>
-          <Link to="/forgot-password" style={styles.forgotPassword}>Forgot password?</Link>
-        </div>
-
-        <div style={styles.signUpPrompt}>
-          Don't have an account? <Link to="/signup" style={styles.signUpLink}>Sign up</Link>
-        </div>
+        {errorMessage && <p style={styles.error}>{errorMessage}</p>}
+        {successMessage && <p style={styles.success}>{successMessage}</p>}
       </div>
     </div>
   );
@@ -116,110 +82,51 @@ const SignIn = () => {
 const styles = {
   container: {
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     height: '100vh',
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f0f0f0',
   },
   loginContainer: {
-    width: '100%',
-    maxWidth: '500px',
-    padding: '40px',
-    border: '1px solid #ccc',
-    borderRadius: '10px',
+    width: '300px',
+    padding: '20px',
     backgroundColor: '#fff',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    position: 'relative',
+    borderRadius: '5px',
+    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
   },
   logoContainer: {
-    position: 'absolute',
-    top: '-50px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    textAlign: 'center',
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '20px',
   },
   logo: {
     width: '100px',
-    height: 'auto',
-    borderRadius: '50%',
-    border: '2px solid #fff',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-  loginTitle: {
-    textAlign: 'center',
-    marginTop: '60px',
-    marginBottom: '20px',
-    fontSize: '24px',
-    color: '#333',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
   },
-  inputGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '5px',
-    fontWeight: 'bold',
-    color: '#555',
-  },
   input: {
-    width: 'calc(100% - 20px)',
     padding: '10px',
+    marginBottom: '10px',
     borderRadius: '5px',
     border: '1px solid #ccc',
-    fontSize: '16px',
   },
-  loginButton: {
+  button: {
     padding: '10px',
     backgroundColor: '#007BFF',
     color: '#fff',
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-    fontSize: '16px',
+  },
+  error: {
+    color: 'red',
     marginTop: '10px',
   },
-  errorMessage: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: '10px',
-  },
-  successMessage: {
+  success: {
     color: 'green',
-    textAlign: 'center',
-    marginBottom: '10px',
-  },
-  options: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '15px',
-  },
-  rememberMe: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
-    color: '#555',
-  },
-  forgotPassword: {
-    textDecoration: 'none',
-    color: '#007BFF',
-    fontSize: '14px',
-  },
-  signUpPrompt: {
-    textAlign: 'center',
-    marginTop: '20px',
-    color: '#555',
-  },
-  signUpLink: {
-    textDecoration: 'none',
-    color: '#007BFF',
-    fontWeight: 'bold',
+    marginTop: '10px',
   },
 };
 

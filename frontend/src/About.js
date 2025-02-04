@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import logo from './images/logo.webp'; 
+import logo from './images/logo.png'; 
 
 const About = () => {
   const [showContact, setShowContact] = useState(false);
