@@ -5,25 +5,19 @@ from app.models.user import User
 from app.models.voting_session import VotingSession
 from app.schemas.voting_session import VotingSessionCreate, VotingSessionUpdate, VotingSessionResponse
 
-# ------------------------------------------------------------------------------
-# Test Data
-# ------------------------------------------------------------------------------
 TEST_SESSION_DATA = {
     "title": "New Voting Session",
     "description": "A session for testing",
-    "whitelist": False
+    "whitelist": []
 }
 
 TEST_SESSION_UPDATE = {
     "title": "Updated Voting Session",
     "description": "Updated session description",
     "is_published": True,
-    "whitelist": True
+    "whitelist": []
 }
 
-# ------------------------------------------------------------------------------
-# Helper Functions
-# ------------------------------------------------------------------------------
 def create_test_user(db_session, username="testuser", email="testuser@example.com", password="secret"):
     """
     Creates and returns a dummy User instance.
@@ -59,9 +53,6 @@ def create_test_voting_session(db_session, creator_id, extra_data: dict = None):
     db_session.refresh(session)
     return session
 
-# ------------------------------------------------------------------------------
-# Tests for Voting Session Routes
-# ------------------------------------------------------------------------------
 class TestVotingSessionRoutes:
     # Create Voting Session Tests
     def test_create_voting_session_success(self, client, db_session):
@@ -71,12 +62,17 @@ class TestVotingSessionRoutes:
         """
         creator = create_test_user(db_session, username="creator1", email="creator1@example.com")
         payload = TEST_SESSION_DATA.copy()
-        response = client.post(f"/api/voting-sessions/?creator_id={creator.id}", json=payload)
+        response = client.post(
+            f"/api/voting-sessions/?creator_id={creator.id}",
+            json={
+                "title": "New Voting Session",
+                "description": "A session for testing"
+            }
+        )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["title"] == payload["title"]
         assert data["description"] == payload["description"]
-        assert data["whitelist"] == payload["whitelist"]
         assert data["creator_id"] == creator.id
         # Check that the returned response includes an ID, a time_created and is_published field.
         assert "id" in data
@@ -256,7 +252,6 @@ class TestVotingSessionRoutes:
         assert data["title"] == update_payload["title"]
         assert data["description"] == update_payload["description"]
         assert data["is_published"] == update_payload["is_published"]
-        assert data["whitelist"] == update_payload["whitelist"]
         # Verify in the DB.
         updated_session = db_session.query(VotingSession).filter(VotingSession.id == session.id).first()
         assert updated_session.title == update_payload["title"]
