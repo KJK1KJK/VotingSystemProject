@@ -20,22 +20,23 @@ const Home = () => {
 
   return (
     <div style={styles.container}>
-      {/* Passcode Input Box */}
-      <div style={styles.passcodeContainer}>
-        <input
-          type="text"
-          placeholder="Enter passcode for a certain poll"
-          style={styles.passcodeInput}
-        />
-        <button style={styles.passcodeButton}>Submit</button>
+
+<div>
+        <h1>Welcome to PollHub</h1>
+        <p>PollHub is your go-to platform for creating, managing, and participating in polls and surveys. Whether you're looking to gather opinions, make decisions, or simply engage with your community, PollHub provides the tools you need to create effective and engaging polls.</p>
+        <p><strong>Features:</strong></p>
+        <ul>
+          <li><strong>Create Polls:</strong> Easily create public polls with multiple questions and options. Customize your polls to suit your needs and gather valuable insights from your audience.</li>
+          <li><strong>Participate in Polls:</strong> Join polls created by others and share your opinions. Your feedback helps shape decisions and provides valuable insights.</li>
+          <li><strong>Manage Polls:</strong> Keep track of your polls, view results in real-time, and analyze the data to make informed decisions.</li>
+          <li><strong>User-Friendly Interface:</strong> Our intuitive interface makes it easy for anyone to create and participate in polls, regardless of technical expertise.</li>
+          <li><strong>Secure and Private:</strong> We prioritize your privacy and security. Your data is protected and only accessible to you and those you choose to share it with.</li>
+        </ul>
+        <p><strong>Why Choose PollHub?</strong></p>
+        <p>PollHub is designed to be a comprehensive solution for all your polling needs. Whether you're a business looking to gather customer feedback, a teacher conducting classroom surveys, or an organization seeking member input, PollHub has you covered. Our platform is flexible, reliable, and easy to use, making it the perfect choice for anyone looking to create and manage polls.</p>
+        <p>Join PollHub today and start making your voice heard!</p>
       </div>
-
       
-
-      
-
-      
-
       {/* Pricing Toggle */}
       <div style={styles.toggleContainer}>
         <button

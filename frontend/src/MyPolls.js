@@ -8,7 +8,6 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   ]);
   const [timeLimit, setTimeLimit] = useState("");
   const [pollType, setPollType] = useState("public");
-  const [pollPassword, setPollPassword] = useState("");
 
   
   useEffect(() => {
@@ -92,18 +91,13 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
     const expirationTime = new Date();
     expirationTime.setMinutes(expirationTime.getMinutes() + parseInt(timeLimit)); 
 
-    let password = null;
-    if (pollType === "private") {
-      password = Math.random().toString(36).slice(2, 8);
-      setPollPassword(password);  
-    }
+    
 
     const sessionData = {
       title: newPoll,
       questions,
       expiration: expirationTime.toISOString(), 
       type: pollType,
-      password,
     };
 
     try {
@@ -153,7 +147,6 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
       setNewPoll("");
       setQuestions([{ text: "", options: ["", ""] }]);
       setTimeLimit("");
-      setPollPassword("");
     } catch (error) {
       console.error(error.message);
       alert("An error occurred while submitting the poll.");
@@ -217,8 +210,11 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
           </button>
         </div>
       ))}
+      <br />
 
       <button onClick={handleAddQuestion} style={styles.addButton}>Add Question</button>
+      <br />
+      <br />
 
       <div>
         <input
@@ -229,6 +225,7 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
           style={styles.input}
         />
       </div>
+      <br />
 
       <div>
         <select
@@ -237,15 +234,10 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
           style={styles.input}
         >
           <option value="public">Public Poll</option>
-          <option value="private">Private Poll</option>
         </select>
       </div>
 
-      {pollType === "private" && (
-        <div>
-          <label>Private Poll Password: {pollPassword}</label>
-        </div>
-      )}
+      
 
       <button onClick={handlePollSubmit} style={styles.submitButton}>Submit Poll</button>
 
@@ -268,9 +260,7 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
                   </ul>
                 </div>
               ))}
-              {poll.type === "private" && (
-                <p>Private Poll - Password: {poll.password}</p>
-              )}
+              
               <button onClick={() => handleDeleteSession(poll.sessionId)} style={styles.deleteButton}>
                 Delete Poll
               </button>
@@ -284,10 +274,10 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
 
 const styles = {
   container: {
-    padding: '20px',
+    padding: '30px',
     border: '1px solid #ccc',
     borderRadius: '8px',
-    width: '400px',
+    width: '500px',
     margin: '0 auto',
     backgroundColor: '#f9f9f9',
     boxShadow: '0px 4px 6px rgba(0,0,0,0.1)',
