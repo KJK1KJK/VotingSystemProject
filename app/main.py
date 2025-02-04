@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Security, HTTPException, Depends
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.database import Base, engine
 from app.middleware import api_key_middleware
@@ -21,6 +22,15 @@ Base.metadata.create_all(bind=engine)
 #exit()
 
 app = FastAPI()
+
+#Add CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #Uncomment the api keys line if you want to enable authentication!
 
