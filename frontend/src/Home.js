@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PollCreation from './PollCreation';
-import MyPolls from './MyPolls'; // Default import
+import MyPolls from './MyPolls';
 
 const Home = () => {
   const [isYearly, setIsYearly] = useState(false);

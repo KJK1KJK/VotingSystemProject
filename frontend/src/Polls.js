@@ -109,8 +109,8 @@ const Polls = () => {
   };
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h1>Public Polls</h1>
+    <div style={styles.container}>
+      <h1 style ={styles.title}>Public Polls</h1>
 
       {!hasJoinedPoll && (
         <input
@@ -118,36 +118,48 @@ const Polls = () => {
           placeholder="Search polls by title..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          style={styles.searchInput}
         />
       )}
 
-      <div>
+      <div style={styles.pollsContainer}>
         {filteredPolls.map((poll) => (
           <div
             key={poll.id}
+            style={{
+              ...styles.pollCard,
+              border: selectedPoll === poll.id ? "2px solid #007BFF" : "1px solid #ccc",
+            }}
             onClick={() => handleSelectPoll(poll.id)}
-            style={{ cursor: "pointer", border: "1px solid", margin: "10px", padding: "10px" }}
+            //style={{ cursor: "pointer", border: "1px solid", margin: "10px", padding: "10px" }}
           >
-            {poll.title}
+            <h3 style={styles.pollTitle}>{poll.title}</h3>
           </div>
-        ))}
+        ))
+        }
       </div>
 
       {selectedPoll && hasJoinedPoll && (
-        <div>
+        <div style={styles.questionsContainer}>
+          <h3>Questions</h3>
           {questions.map((question) => (
             <div key={question.id}>
               <h4>{question.title}</h4>
-              {question.candidates.map((candidate) => (
-                <button
-                  key={candidate.id}
-                  onClick={() => handleSelectCandidate(candidate.id)}
-                  style={{ backgroundColor: selectedCandidates.includes(candidate.id) ? "#007BFF" : "#f0f0f0" }}
-                >
-                  {candidate.name}
-                </button>
-              ))}
-              <button onClick={() => handleSubmitVote(question.id)}>Submit Vote</button>
+              <div style={styles.candidatesContainer}>
+                {question.candidates.map((candidate) => (
+                  <button
+                    key={candidate.id}
+                    onClick={() => handleSelectCandidate(candidate.id)}
+                    style={{ backgroundColor: selectedCandidates.includes(candidate.id) ? "#007BFF" : "#f0f0f0" }}
+                  >
+                    {candidate.name}
+                  </button>
+                ))}
+                 <br></br>
+              </div>
+              <button onClick={() => handleSubmitVote(question.id)} style={styles.submitButton}>
+                Submit Vote
+              </button>
             </div>
           ))}
         </div>
@@ -155,5 +167,83 @@ const Polls = () => {
     </div>
   );
 };
+
+const styles = {
+  container: {
+    padding: "20px",
+    textAlign: "center",
+    fontFamily: "Arial, sans-serif",
+  },
+  title: {
+    fontSize: "24px",
+    marginBottom: "20px",
+  },
+  searchInput: {
+    padding: "10px",
+    width: "80%",
+    maxWidth: "400px",
+    marginBottom: "20px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+  },
+  pollsContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  pollCard: {
+    width: "80%",
+    maxWidth: "400px",
+    padding: "10px",
+    marginBottom: "10px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    transition: "border 0.3s ease",
+  },
+  pollTitle: {
+    margin: "0",
+    fontSize: "18px",
+  },
+  selectedPollContainer: {
+    width: "80%",
+    maxWidth: "400px",
+    padding: "10px",
+    borderRadius: "5px",
+    border: "2px solid #007BFF",
+  },
+  selectedPollTitle: {
+    margin: "0",
+    fontSize: "18px",
+  },
+  questionsContainer: {
+    marginTop: "20px",
+  },
+  questionCard: {
+    marginBottom: "20px",
+  },
+  candidatesContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  optionButton: {
+    padding: "10px",
+    margin: "5px 0",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+  submitButton: {
+    padding: "10px 20px",
+    backgroundColor: "#007BFF",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+};
+
 
 export default Polls;
