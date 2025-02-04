@@ -75,6 +75,7 @@
     <Content Include=".env" />
     <Content Include=".gitattributes" />
     <Content Include=".gitignore" />
+    <Content Include="frontend\src\fetchPolls.js" />
     <Content Include="LICENSE.txt" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />

@@ -89,3 +89,20 @@ def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
     db.delete(candidate)
     db.commit()
     return {"detail": "Candidate deleted successfully"}
+
+#Geta all candidates per voting session
+@router.get("/session/{session_id}", response_model=List[CandidateResponse])
+def get_candidates_by_session(session_id: int, db: Session = Depends(get_db)):
+    
+    #Check voting session exists and queary all question for it
+    questions = db.query(Question).filter(Question.session_id == session_id).all()
+    if not questions:
+        raise HTTPException(status_code=404, detail="No questions found for this voting session.")
+
+    #Extract all question IDs
+    question_ids = [q.id for q in questions]
+
+    #Get all candidates related to those questions
+    candidates = db.query(Candidate).filter(Candidate.question_id.in_(question_ids)).all()
+
+    return candidates

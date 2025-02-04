@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
-const MyPolls = ({ polls = [], setPolls = () => {} }) => {
+const MyPolls = () => {
   
   const [newPoll, setNewPoll] = useState("");
   const [questions, setQuestions] = useState([
@@ -9,27 +9,39 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   ]);
     const [userId, setUserId] = useState(null);
     const username = Cookies.get('username');
-    console.log("FIRST LOG: "+username);
+    console.log("FIRST LOG: " + username);
+    const [polls, setPolls] = useState([]);
     
     useEffect(() => {
-        const fetchPolls = async () => {
+        const fetchUserId = async () => {
             try {
-                console.log("SECOND LOG: "+username);
-                const userResponse = await fetch(`http://127.0.0.1:8000/api/users/username/${username}`, {
+                const response = await fetch(`http://127.0.0.1:8000/api/users/username/${username}`, {
                     headers: {
                         'accept': 'application/json',
                     },
                 });
-                
-                if (!userResponse.ok) {
-                    throw new Error("Failed to fetch user Id.");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch user ID.");
                 }
+                const userData = await response.json();
+                setUserId(userData.id); // Store userId in state
+            } catch (error) {
+                console.error(error.message);
+            }
+        };
 
-                const userData = await userResponse.json();
-                setUserId(userData.id);
+        if (username) {
+            fetchUserId();
+        }
+    }, [username]);
 
-                console.log("THIRD LOG: "+userData.id);
-                const response = await fetch(`http://127.0.0.1:8000/api/voting-sessions/user/${Cookies.get("userId")}/drafts`, {
+    // Fetch polls using userId
+    useEffect(() => {
+        const fetchPolls = async () => {
+            if (!userId) return; // Skip if userId is not available
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/api/voting-sessions/user/${userId}/drafts`, {
                     headers: {
                         'accept': 'application/json',
                     },
@@ -85,7 +97,11 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   };
 
   const handlePollSubmit = async () => {
-  
+    if (!userId) {
+      alert("User ID is not available. Please try again.");
+      return;
+    }
+
     if (!newPoll.trim()) {
       alert("Poll title is required.");
       return;
@@ -128,7 +144,17 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
       const sessionResult = await sessionResponse.json();
       const sessionId = sessionResult.id; 
 
-      
+      if (typeof setPolls === "function") {
+      setPolls(prevPolls => [
+        ...prevPolls,
+        {
+          ...sessionData,
+          sessionId, // Include the session ID
+          id: sessionId, // Use the same ID for rendering
+        },
+      ]);
+    }
+
       for (const question of questions) {
          const questionData = {
              type: "string",
@@ -253,34 +279,6 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
       <button onClick={handlePollSubmit} style={styles.submitButton}>Submit Poll</button>
       <br></br>
       
-      <div>
-        <h3>Your Polls</h3>
-        {polls.length === 0 ? (
-          <p>No polls created yet.</p>
-        ) : (
-          polls.map((poll, index) => (
-            <div key={index} style={styles.pollContainer}>
-              <h4>{poll.title}</h4>
-              {poll.questions.map((question, qIndex) => (
-                <div key={qIndex}>
-                  <p><strong>Q{qIndex + 1}:</strong> {question.text}</p>
-                  <ul>
-                    {question.options.map((option, oIndex) => (
-                      <li key={oIndex}>{option}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              {poll.type === "private" && (
-                <p>Private Poll - Password: {poll.password}</p>
-              )}
-              <button onClick={() => handleDeleteSession(poll.sessionId)} style={styles.deleteButton}>
-                Delete Poll
-              </button>
-            </div>
-          ))
-        )}
-      </div>
     </div>
   );
 };

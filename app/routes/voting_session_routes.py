@@ -131,8 +131,6 @@ def update_voting_session(
         db_voting_session.description = voting_session.description
     if voting_session.is_published is not None:
         db_voting_session.is_published = voting_session.is_published
-    if voting_session.whitelist is not None:
-        db_voting_session.whitelist = voting_session.whitelist
     
     #Commit the changes
     db.commit()

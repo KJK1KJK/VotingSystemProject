@@ -13,7 +13,6 @@ class VotingSession(Base):
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     time_created = Column(DateTime, default=datetime.utcnow)
     is_published = Column(Boolean, default=False)
-    whitelist = Column(Boolean, default=False)
 
     creator = relationship("User", back_populates="voting_sessions")
     settings = relationship("SessionSettings", back_populates="voting_session", cascade="all, delete-orphan")
