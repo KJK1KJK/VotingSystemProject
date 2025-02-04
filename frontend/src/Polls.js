@@ -1,127 +1,150 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+const API_BASE_URL = "http://127.0.0.1:8000/api"; 
 
 const Polls = () => {
-
   const navigate = useNavigate();
-
-  const [polls, setPolls] = useState([
-    { id: 1, title: 'Adrian' },
-    { id: 2, title: 'Kacper' },
-    { id: 3, title: 'Ziyad' },
-    { id: 4, title: 'Niggas' },
-    { id: 5, title: 'Artun is best' },
-  ]);
-  const [poll, setPoll] = useState({
-    questions: [
-        'Is Adrian is hot?',
-        'Is Kacper a victim of woke culture ',
-        'Is Black lives really matter ?',
-        'Does Ziyad have oil money? ',
-        'Do u love Artun?'
-    ],
-    options: [
-      { type: 'rating', label: 'Rate from 1 to 5', value: null },
-      { type: 'checkbox', label: 'Select all that apply', choices: [] },
-      { type: 'radio', label: 'Choose one option', selected: null },
-    ],
-  });
-
-  const [rating, setRating] = useState(null);
-  const [checkboxes, setCheckboxes] = useState([
-    { id: 1, label: 'Option 1', checked: false },
-    { id: 2, label: 'Option 2', checked: false },
-    { id: 3, label: 'Option 3', checked: false },
-  ]);
-  const [selectedRadio, setSelectedRadio] = useState(null);
+  const [polls, setPolls] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredPolls, setFilteredPolls] = useState([]);
   const [selectedPoll, setSelectedPoll] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredPolls, setFilteredPolls] = useState(polls);
+  const [questions, setQuestions] = useState([]);
   const [hasJoinedPoll, setHasJoinedPoll] = useState(false);
-  const [randomQuestion, setRandomQuestion] = useState('');
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [userId, setUserId] = useState({id});
 
-  const handleRatingChange = (value) => {
-    setRating(value);
-  };
-
-  const handleCheckboxChange = (id) => {
-    const updatedCheckboxes = checkboxes.map((checkbox) =>
-      checkbox.id === id ? { ...checkbox, checked: !checkbox.checked } : checkbox
-    );
-    setCheckboxes(updatedCheckboxes);
-  };
-
-  const handleRadioChange = (value) => {
-    setSelectedRadio(value);
-  };
-
-  const handleSubmit = () => {
-    const responses = {
-      rating,
-      checkboxes: checkboxes.filter((cb) => cb.checked).map((cb) => cb.label),
-      selectedRadio,
-    };
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId"); 
   
-    localStorage.setItem('pollResponses', JSON.stringify(responses)); // Store responses
-    console.log('Poll Responses:', responses);
-    alert('Thank you for participating in the poll!');
-    navigate('/results'); // Navigate to results page
-  };
-  
-  
+    if (storedUserId) {
+      setUserId(storedUserId); 
+    } else {
+      fetch(`${API_BASE_URL}/users/${id}`) 
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to fetch user");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setUserId(data.id);
+          localStorage.setItem("userId", data.id); 
+        })
+        .catch((err) => console.error("Error fetching user:", err));
+    }
+  }, []);
 
-  const handleSearch = (e) => {
+
+
+
+  useEffect(() => {
+    fetchPolls();
+  }, []);
+
+ 
+  const fetchPolls = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/voting-sessions`);
+      const data = await response.json();
+      setPolls(data);
+      setFilteredPolls(data);
+    } catch (error) {
+      console.error("Error fetching polls:", error);
+    }
+  };
+
+  
+  const fetchQuestionsAndCandidates = async (sessionId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/questions/${sessionId}/questions`);
+      const questionData = await response.json();
+
+      
+      const updatedQuestions = await Promise.all(
+        questionData.map(async (question) => {
+          const candidatesResponse = await fetch(`${API_BASE_URL}/candidates/${question.id}/candidates`);
+          const candidatesData = await candidatesResponse.json();
+          return { ...question, candidates: candidatesData };
+        })
+      );
+
+      setQuestions(updatedQuestions);
+    } catch (error) {
+      console.error("Error fetching questions and candidates:", error);
+    }
+  };
+
+  
+  const handleSearch = async (e) => {
     const term = e.target.value;
     setSearchTerm(term);
 
-    const results = polls.filter(poll =>
-      poll.title.toLowerCase().includes(term.toLowerCase())
-    );
-    setFilteredPolls(results);
+    try {
+      const response = await fetch(`${API_BASE_URL}/search/my-polls?title=${term}`);
+      const data = await response.json();
+      setFilteredPolls(data);
+    } catch (error) {
+      console.error("Error searching for polls:", error);
+    }
   };
 
-  const handleSelectPoll = (pollId) => {
+  
+  const handleSelectPoll = async (pollId) => {
     if (selectedPoll === pollId) {
       setSelectedPoll(null);
+      setQuestions([]);
     } else {
       setSelectedPoll(pollId);
-    }
-  };
-
-  const handleJoinPoll = () => {
-    if (selectedPoll) {
+      await fetchQuestionsAndCandidates(pollId);
       setHasJoinedPoll(true);
-      // Rastgele bir soru seç
-      const randomIndex = Math.floor(Math.random() * poll.questions.length);
-      setRandomQuestion(poll.questions[randomIndex]);
-      console.log(`Joined poll with ID: ${selectedPoll}`);
-      alert(`You joined the poll with ID: ${selectedPoll}`);
-    } else {
-      alert('Please select a poll first!');
     }
   };
 
-  const containerRef = useRef(null);
+  
+  const handleSelectCandidate = (candidateId) => {
+    setSelectedCandidate(candidateId);
+  };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setSelectedPoll(null);
+  
+  const handleSubmitVote = async (questionId) => {
+    if (!selectedCandidate) {
+      alert("Please select a candidate first!");
+      return;
+    }
+
+    try {
+      const voteResponse = await fetch(`${API_BASE_URL}/votes/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, candidate_id: selectedCandidate }),
+      });
+
+      if (!voteResponse.ok) {
+        throw new Error("Error submitting vote");
       }
-    };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+      const answerResponse = await fetch(`${API_BASE_URL}/answers/${questionId}/answers/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: `Voted for candidate ${selectedCandidate}` }),
+      });
+
+      if (!answerResponse.ok) {
+        throw new Error("Error saving answer");
+      }
+      alert("Vote submitted successfully!");
+      //navigate(/pollresults/${selectedPoll});
+    } catch (error) {
+      console.error("Error submitting vote:", error);
+    }
+  };
 
   return (
-    <div style={styles.container} ref={containerRef}>
+    <div style={styles.container}>
       <h1 style={styles.title}>Public Polls</h1>
 
-      {/* Searching bar */}
+      {/* Search Polls */}
       {!hasJoinedPoll && (
         <input
           type="text"
@@ -132,7 +155,7 @@ const Polls = () => {
         />
       )}
 
-      {/* Poll list */}
+      {/* Polls List */}
       {!hasJoinedPoll ? (
         <div style={styles.pollsContainer}>
           {filteredPolls.map((poll) => (
@@ -140,8 +163,7 @@ const Polls = () => {
               key={poll.id}
               style={{
                 ...styles.pollCard,
-                border: selectedPoll === poll.id ? '2px solid #007BFF' : '1px solid #ccc',
-                backgroundColor: selectedPoll === poll.id ? '#f0f8ff' : '#fff',
+                border: selectedPoll === poll.id ? "2px solid #007BFF" : "1px solid #ccc",
               }}
               onClick={() => handleSelectPoll(poll.id)}
             >
@@ -151,186 +173,96 @@ const Polls = () => {
         </div>
       ) : (
         <div style={styles.selectedPollContainer}>
-          <h2 style={styles.selectedPollTitle}>{polls.find(p => p.id === selectedPoll)?.title}</h2>
-          <p style={styles.question}>{randomQuestion}</p>
+          <h2 style={styles.selectedPollTitle}>{polls.find((p) => p.id === selectedPoll)?.title}</h2>
         </div>
       )}
 
-      {/* Join Poll Button */}
-      {!hasJoinedPoll && (
-        <button
-          onClick={handleJoinPoll}
-          style={styles.joinButton}
-          disabled={!selectedPoll}
-        >
-          Join Poll
-        </button>
-      )}
-
-      {/* Conditionally render poll options if the user has joined a poll */}
-      {hasJoinedPoll && (
-        <>
-          {/* Puanlama (1-5) */}
-          <div style={styles.section}>
-            <h3>{poll.options[0].label}</h3>
-            <div style={styles.ratingContainer}>
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  style={{
-                    ...styles.ratingButton,
-                    backgroundColor: rating === value ? '#007BFF' : '#f0f0f0',
-                    color: rating === value ? '#fff' : '#000',
-                  }}
-                  onClick={() => handleRatingChange(value)}
-                >
-                  {value}
-                </button>
-              ))}
+      {/* Questions & Candidates List */}
+      {selectedPoll && hasJoinedPoll && (
+        <div style={styles.questionsContainer}>
+          <h3>Questions & Candidates</h3>
+          {questions.map((question) => (
+            <div key={question.id} style={styles.questionCard}>
+              <h4>{question.title}</h4>
+              <div style={styles.candidatesContainer}>
+                {question.candidates.length > 0 ? (
+                  question.candidates.map((candidate) => (
+                    <button
+                      key={candidate.id}
+                      style={{
+                        ...styles.optionButton,
+                        backgroundColor: selectedCandidate === candidate.id ? "#007BFF" : "#f0f0f0",
+                        color: selectedCandidate === candidate.id ? "#fff" : "#000",
+                      }}
+                      onClick={() => handleSelectCandidate(candidate.id)}
+                    >
+                      {candidate.name}
+                    </button>
+                  ))
+                ) : (
+                  <p>No candidates available</p>
+                )}
+              </div>
+              {/* Submit Vote Button */}
+              <button onClick={() => handleSubmitVote(question.id)} style={styles.submitButton}>
+                Submit Vote
+              </button>
             </div>
-          </div>
-
-          {/* Checkbox seçenekleri */}
-          <div style={styles.section}>
-            <h3>{poll.options[1].label}</h3>
-            {checkboxes.map((checkbox) => (
-              <label key={checkbox.id} style={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={checkbox.checked}
-                  onChange={() => handleCheckboxChange(checkbox.id)}
-                />
-                {checkbox.label}
-              </label>
-            ))}
-          </div>
-
-          {/* Radio button seçenekleri */}
-          <div style={styles.section}>
-            <h3>{poll.options[2].label}</h3>
-            {['Option A', 'Option B', 'Option C'].map((option) => (
-              <label key={option} style={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="radioOption"
-                  checked={selectedRadio === option}
-                  onChange={() => handleRadioChange(option)}
-                />
-                {option}
-              </label>
-            ))}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            onClick={handleSubmit}
-            style={styles.submitButton}
-          >
-            Submit
-          </button>
-        </>
+          ))}
+        </div>
       )}
     </div>
   );
 };
 
-// Stiller
+// Styles
 const styles = {
   container: {
-    padding: '20px',
-    fontFamily: 'Arial, sans-serif',
-    textAlign: 'center',
+    padding: "20px",
+    textAlign: "center",
   },
   title: {
-    fontSize: '32px',
-    marginBottom: '20px',
-    color: '#333',
-  },
-  question: {
-    fontSize: '24px',
-    marginBottom: '30px',
-    color: '#555',
-  },
-  section: {
-    marginBottom: '30px',
-  },
-  ratingContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '10px',
-  },
-  ratingButton: {
-    padding: '10px 20px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  },
-  checkboxLabel: {
-    display: 'block',
-    margin: '10px 0',
-    fontSize: '16px',
-  },
-  radioLabel: {
-    display: 'block',
-    margin: '10px 0',
-    fontSize: '16px',
-  },
-  submitButton: {
-    padding: '10px 20px',
-    backgroundColor: '#28A745',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
+    fontSize: "32px",
+    marginBottom: "20px",
+    color: "#333",
   },
   searchInput: {
-    width: '100%',
-    maxWidth: '500px',
-    padding: '10px',
-    borderRadius: '5px',
-    border: '1px solid #ccc',
-    marginBottom: '20px',
-    fontSize: '16px',
-  },
-  pollsContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: '20px',
+    width: "100%",
+    maxWidth: "500px",
+    padding: "10px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    marginBottom: "20px",
   },
   pollCard: {
-    position: 'relative',
-    width: '300px',
-    border: '1px solid #ccc',
-    borderRadius: '10px',
-    overflow: 'hidden',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    transition: 'transform 0.3s ease',
-    cursor: 'pointer',
+    width: "300px",
+    padding: "15px",
+    border: "1px solid #ccc",
+    borderRadius: "10px",
+    cursor: "pointer",
   },
-  pollTitle: {
-    padding: '15px',
-    fontSize: '20px',
-    color: '#333',
+  questionCard: {
+    padding: "10px",
+    border: "1px solid #ccc",
+    margin: "5px",
+    borderRadius: "5px",
   },
-  joinButton: {
-    padding: '10px 20px',
-    backgroundColor: '#FF8C00',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    marginTop: '20px',
+  candidatesContainer: {
+    marginTop: "10px",
   },
-  selectedPollContainer: {
-    marginTop: '20px',
+  optionButton: {
+    padding: "10px",
+    margin: "5px",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
-  selectedPollTitle: {
-    fontSize: '24px',
-    color: '#333',
+  submitButton: {
+    padding: "10px",
+    backgroundColor: "#28A745",
+    color: "#fff",
+    borderRadius: "5px",
+    cursor: "pointer",
+    marginTop: "10px",
   },
 };
 
