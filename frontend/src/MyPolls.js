@@ -1,77 +1,187 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const MyPolls = ({ polls = [], setPolls = () => {} }) => {
+  
   const [newPoll, setNewPoll] = useState("");
-  const [newQuestion, setNewQuestion] = useState("");
-  const [options, setOptions] = useState(["", ""]);
+  const [questions, setQuestions] = useState([
+    { text: "", options: ["", ""] }, 
+  ]);
+  const [timeLimit, setTimeLimit] = useState("");
+  const [pollType, setPollType] = useState("public");
+  const [pollPassword, setPollPassword] = useState("");
 
-  // Add a new option field
-  const handleAddOption = () => {
-    if (options[options.length - 1].trim()) {
-      setOptions(prevOptions => [...prevOptions, ""]);
+  
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/questions/${sesions_id}/questions');
+        if (!response.ok) {
+          throw new Error("Failed to fetch questions.");
+        }
+        const questionsData = await response.json();
+        setQuestions(questionsData);
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  const handleAddOption = (questionIndex) => {
+    const lastOption = questions[questionIndex].options[questions[questionIndex].options.length - 1];
+    
+    if (lastOption.trim()) {
+      setQuestions(prevQuestions => {
+        const updatedQuestions = [...prevQuestions];
+        updatedQuestions[questionIndex].options.push(""); 
+        return updatedQuestions;
+      });
     } else {
       alert("Please fill in the previous option before adding a new one.");
     }
   };
 
-  // Handle option text change
-  const handleOptionChange = (index, value) => {
-    setOptions(prevOptions => {
-      const updatedOptions = [...prevOptions];
-      updatedOptions[index] = value;
-      return updatedOptions;
+  const handleOptionChange = (questionIndex, optionIndex, value) => {
+    setQuestions(prevQuestions => {
+      const updatedQuestions = [...prevQuestions];
+      updatedQuestions[questionIndex].options[optionIndex] = value;
+      return updatedQuestions;
     });
   };
 
-  // Function to create and submit a new poll
-  const handlePollSubmit = () => {
-    // Validate inputs
+  const handleAddQuestion = () => {
+    setQuestions(prevQuestions => [
+      ...prevQuestions,
+      { text: "", options: ["", ""] }, 
+    ]);
+  };
+
+  const handleQuestionChange = (index, value) => {
+    setQuestions(prevQuestions => {
+      const updatedQuestions = [...prevQuestions];
+      updatedQuestions[index].text = value;
+      return updatedQuestions;
+    });
+  };
+
+  const handlePollSubmit = async () => {
+  
     if (!newPoll.trim()) {
       alert("Poll title is required.");
       return;
     }
-    if (!newQuestion.trim()) {
-      alert("Poll question is required.");
+    if (questions.some(q => !q.text.trim())) {
+      alert("Please fill in all questions.");
       return;
     }
-    if (options.some(option => !option.trim())) {
+    if (questions.some(q => q.options.some(option => !option.trim()))) {
       alert("Please fill out all options.");
       return;
     }
-    if (options.length < 2) {
-      alert("Please add at least two options.");
+    if (questions.some(q => q.options.length < 2)) {
+      alert("Please add at least two options for each question.");
       return;
     }
 
-    // Create new poll data
-    const newPollData = {
-      id: polls.length + 1,  // Assign a unique ID
-      title: newPoll,
-      questions: [
-        {
-          text: newQuestion,
-          options,
-        },
-      ],
-    };
-
-    // Update polls state safely using previous state
-    if (typeof setPolls === "function") {
-      setPolls(prevPolls => [...prevPolls, newPollData]);
-    } else {
-      console.error("setPolls is not a function! Ensure it is passed as a prop.");
+    if (!timeLimit || isNaN(timeLimit) || timeLimit <= 0) {
+      alert("Please enter a valid time limit in minutes.");
+      return;
     }
 
-    // Reset form fields
-    setNewPoll("");
-    setNewQuestion("");
-    setOptions(["", ""]);
+    const expirationTime = new Date();
+    expirationTime.setMinutes(expirationTime.getMinutes() + parseInt(timeLimit)); 
+
+    let password = null;
+    if (pollType === "private") {
+      password = Math.random().toString(36).slice(2, 8);
+      setPollPassword(password);  
+    }
+
+    const sessionData = {
+      title: newPoll,
+      questions,
+      expiration: expirationTime.toISOString(), 
+      type: pollType,
+      password,
+    };
+
+    try {
+      
+      
+      const sessionResponse = await fetch("http://127.0.0.1:8000/api/voting-sessions/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sessionData),
+      });
+
+      if (!sessionResponse.ok) {
+        throw new Error("Failed to create session.");
+      }
+
+      const sessionResult = await sessionResponse.json();
+      const sessionId = sessionResult.id; 
+
+      
+      for (const question of questions) {
+        const questionData = {
+          text: question.text,
+          options: question.options,
+        };
+
+        const questionResponse = await fetch("http://127.0.0.1:8000/api/questions/${sesion_id}/questions/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(questionData),
+        });
+
+        if (!questionResponse.ok) {
+          throw new Error("Failed to create question.");
+        }
+      }
+
+  
+      if (typeof setPolls === "function") {
+        setPolls(prevPolls => [...prevPolls, { ...sessionData, sessionId }]);
+      }
+
+     
+      setNewPoll("");
+      setQuestions([{ text: "", options: ["", ""] }]);
+      setTimeLimit("");
+      setPollPassword("");
+    } catch (error) {
+      console.error(error.message);
+      alert("An error occurred while submitting the poll.");
+    }
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    try {
+     
+      const deleteSessionResponse = await fetch(`http://127.0.0.1:8000/api/sessions-settings/settings/${sessionId}/`, {
+        method: "DELETE",
+      });
+      
+      if (!deleteSessionResponse.ok) {
+        throw new Error("Failed to delete session.");
+      }
+
+      setPolls(prevPolls => prevPolls.filter(poll => poll.sessionId !== sessionId));
+    } catch (error) {
+      console.error(error.message);
+      alert("An error occurred while deleting the poll and session.");
+    }
   };
 
   return (
     <div style={styles.container}>
       <h2>Create Poll</h2>
-      
+
       <div>
         <input
           type="text"
@@ -82,34 +192,64 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
         />
       </div>
 
+      {questions.map((question, qIndex) => (
+        <div key={qIndex}>
+          <input
+            type="text"
+            placeholder={`Question ${qIndex + 1}`}
+            value={question.text}
+            onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
+            style={styles.input}
+          />
+          {question.options.map((option, oIndex) => (
+            <div key={oIndex} style={styles.optionContainer}>
+              <input
+                type="text"
+                value={option}
+                onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                placeholder={`Option ${oIndex + 1}`}
+                style={styles.input}
+              />
+            </div>
+          ))}
+          <button onClick={() => handleAddOption(qIndex)} style={styles.addButton}>
+            Add Option
+          </button>
+        </div>
+      ))}
+
+      <button onClick={handleAddQuestion} style={styles.addButton}>Add Question</button>
+
       <div>
         <input
-          type="text"
-          placeholder="Question"
-          value={newQuestion}
-          onChange={(e) => setNewQuestion(e.target.value)}
+          type="number"
+          placeholder="Time Limit (in minutes)"
+          value={timeLimit}
+          onChange={(e) => setTimeLimit(e.target.value)}
           style={styles.input}
         />
       </div>
 
       <div>
-        {options.map((option, index) => (
-          <div key={index} style={styles.optionContainer}>
-            <input
-              type="text"
-              value={option}
-              onChange={(e) => handleOptionChange(index, e.target.value)}
-              placeholder={`Option ${index + 1}`}
-              style={styles.input}
-            />
-          </div>
-        ))}
-        <button onClick={handleAddOption} style={styles.addButton}>Add Option</button>
+        <select
+          value={pollType}
+          onChange={(e) => setPollType(e.target.value)}
+          style={styles.input}
+        >
+          <option value="public">Public Poll</option>
+          <option value="private">Private Poll</option>
+        </select>
       </div>
+
+      {pollType === "private" && (
+        <div>
+          <label>Private Poll Password: {pollPassword}</label>
+        </div>
+      )}
 
       <button onClick={handlePollSubmit} style={styles.submitButton}>Submit Poll</button>
 
-      {/* Display Created Polls */}
+      
       <div>
         <h3>Your Polls</h3>
         {polls.length === 0 ? (
@@ -128,6 +268,12 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
                   </ul>
                 </div>
               ))}
+              {poll.type === "private" && (
+                <p>Private Poll - Password: {poll.password}</p>
+              )}
+              <button onClick={() => handleDeleteSession(poll.sessionId)} style={styles.deleteButton}>
+                Delete Poll
+              </button>
             </div>
           ))
         )}
@@ -136,7 +282,6 @@ const MyPolls = ({ polls = [], setPolls = () => {} }) => {
   );
 };
 
-// Styles for the component
 const styles = {
   container: {
     padding: '20px',
@@ -158,29 +303,34 @@ const styles = {
     marginBottom: '10px',
   },
   addButton: {
-    padding: '8px',
-    backgroundColor: '#007BFF',
-    color: 'white',
+    padding: '8px 16px',
     border: 'none',
+    backgroundColor: '#28a745',
+    color: 'white',
     borderRadius: '5px',
     cursor: 'pointer',
-    width: '100%',
-    marginBottom: '10px',
   },
   submitButton: {
-    padding: '8px',
-    backgroundColor: '#28A745',
+    padding: '10px 20px',
+    backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-    width: '100%',
+  },
+  deleteButton: {
+    padding: '8px 16px',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
   },
   pollContainer: {
     marginTop: '20px',
-    padding: '10px',
+    padding: '15px',
     border: '1px solid #ddd',
-    borderRadius: '5px',
+    borderRadius: '8px',
     backgroundColor: '#fff',
   },
 };
