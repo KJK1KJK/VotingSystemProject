@@ -3,9 +3,10 @@ uvicorn
 sqlalchemy
 python-dotenv
 passlib[bcrypt]
-pydantic[email,timezone]
+pydantic[email,timezone]==2.11.5
 bcrypt
 python-jose
 pytest==7.4.0
 pytest-cov==4.1.0
 starlette
+alembic

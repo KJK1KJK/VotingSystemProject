@@ -16,6 +16,7 @@ from app.routes.candidate_routes import router as candidate_router
 from app.routes.vote_routes import router as vote_router
 from app.routes.whitelist_routes import router as whitelist_router
 from app.routes.feedback_routes import router as feedback_router
+from app.routes.user_group_routes import router as user_group_router
 
 #Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -53,3 +54,4 @@ app.include_router(candidate_router, prefix="/api/candidates", tags=["Candidates
 app.include_router(vote_router, prefix="/api/votes", tags=["Votes"])
 app.include_router(whitelist_router, prefix="/api/whitelist", tags=["Whitelist"])
 app.include_router(feedback_router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(user_group_router, prefix="/api/user-groups", tags=["UserGroups"])

@@ -12,3 +12,16 @@ class WhitelistResponse(WhitelistBase):
     
     class Config:
         from_attributes = True
+
+class WhitelistByUserRequest(BaseModel):
+    user_id: int
+
+class WhitelistBySessionRequest(BaseModel):
+    session_id: int
+
+class WhitelistGroupUsersRequest(BaseModel):
+    group_id: int
+    session_id: int
+
+class WhitelistByID(BaseModel):
+    whitelist_id: int

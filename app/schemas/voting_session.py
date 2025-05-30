@@ -7,6 +7,7 @@ class VotingSessionBase(BaseModel):
     description: Optional[str] = None
 
 class VotingSessionCreate(VotingSessionBase):
+    creator_id: int
     pass
 
 class VotingSessionUpdate(BaseModel):
@@ -22,3 +23,6 @@ class VotingSessionResponse(VotingSessionBase):
 
     class Config:
         from_attributes = True
+
+class UserIDRequest(BaseModel):
+    user_id: int

@@ -90,7 +90,7 @@ def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"detail": "Candidate deleted successfully"}
 
-#Geta all candidates per voting session
+#Get all candidates per voting session
 @router.get("/session/{session_id}", response_model=List[CandidateResponse])
 def get_candidates_by_session(session_id: int, db: Session = Depends(get_db)):
     

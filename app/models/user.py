@@ -16,6 +16,8 @@ class User(Base):
     votes = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
     feedbacks = relationship("Feedback", back_populates="user")
     whitelist = relationship("Whitelist", back_populates="user", cascade="all, delete-orphan")
+    membership = relationship("GroupMembership", back_populates="user")
+    user_group = relationship("UserGroup", back_populates="creator")
 
     type = Column(String, nullable=False)
 

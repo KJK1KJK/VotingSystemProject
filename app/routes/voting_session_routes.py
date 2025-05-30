@@ -1,11 +1,11 @@
-from app.models import voting_session, whitelist
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.services.database import get_db
 from app.models.voting_session import VotingSession
+from app.models.whitelist import Whitelist
 from app.models.user import User
-from app.schemas.voting_session import VotingSessionCreate, VotingSessionResponse, VotingSessionUpdate
+from app.schemas.voting_session import VotingSessionCreate, VotingSessionResponse, VotingSessionUpdate, UserIDRequest
 
 router = APIRouter()
 
@@ -13,12 +13,11 @@ router = APIRouter()
 @router.post("/", response_model=VotingSessionResponse)
 def create_voting_session(
     session_data: VotingSessionCreate, 
-    creator_id: int, 
     db: Session = Depends(get_db)
 ):
 
     #Check if user exists
-    creator = db.query(User).filter(User.id == creator_id).first()
+    creator = db.query(User).filter(User.id == session_data.creator_id).first()
     if not creator:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -26,7 +25,7 @@ def create_voting_session(
     new_session = VotingSession(
         title=session_data.title,
         description=session_data.description,
-        creator_id=creator_id,
+        creator_id=session_data.creator_id,
     )
     db.add(new_session)
     db.commit()
@@ -59,10 +58,12 @@ def get_voting_session(session_id: int, db: Session = Depends(get_db)):
 #Delete a voting session
 @router.delete("/{session_id}")
 def delete_voting_session(session_id: int, db: Session = Depends(get_db)):
+    
     #Check if id in database
     session = db.query(VotingSession).filter(VotingSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Voting session not found")
+    
     #Delete
     db.delete(session)
     db.commit()
@@ -83,11 +84,12 @@ def publish_voting_session(session_id: int, db: Session = Depends(get_db)):
     return {"detail": "Voting session published successfully"}
 
 #Get all published sessions for a user
-@router.get("/user/{user_id}/published", response_model=List[VotingSessionResponse])
-def get_published_sessions(user_id: int, db: Session = Depends(get_db)):
+@router.post("/user/published", response_model=List[VotingSessionResponse])
+def get_published_sessions(request: UserIDRequest, db: Session = Depends(get_db)):
+    
     #Fetch all published voting sessions by a user
     sessions = db.query(VotingSession).filter(
-        VotingSession.creator_id == user_id,
+        VotingSession.creator_id == request.user_id,
         VotingSession.is_published == True
     ).all()
     
@@ -97,12 +99,12 @@ def get_published_sessions(user_id: int, db: Session = Depends(get_db)):
     return sessions
 
 #Get all drafts for a user
-@router.get("/user/{user_id}/drafts", response_model=List[VotingSessionResponse])
-def get_unpublished_sessions(user_id: int, db: Session = Depends(get_db)):
+@router.post("/user/drafts", response_model=List[VotingSessionResponse])
+def get_unpublished_sessions(request: UserIDRequest, db: Session = Depends(get_db)):
 
     #Fetch all drafts for a user
     sessions = db.query(VotingSession).filter(
-        VotingSession.creator_id == user_id,
+        VotingSession.creator_id == request.user_id,
         VotingSession.is_published == False
     ).all()
     
@@ -137,3 +139,18 @@ def update_voting_session(
     db.refresh(db_voting_session)
     
     return db_voting_session
+
+@router.post("/user/whitelisted", response_model=List[VotingSessionResponse])
+def get_whitelisted_sessions(request: UserIDRequest, db: Session = Depends(get_db)):
+    
+    #Fetch all published voting sessions that the user has access to
+    sessions = db.query(VotingSession).join(Whitelist).filter(
+        Whitelist.user_id == request.user_id,
+        VotingSession.is_published == True
+    ).all()
+
+    #Check if sessions exists
+    if not sessions:
+        raise HTTPException(status_code=404, detail="No whitelisted voting sessions found for this user")
+
+    return sessions
