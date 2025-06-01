@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.services.database import Base, engine
 from app.middleware import api_key_middleware
 
+#database routes
 from app.routes.user_routes import router as user_router
 from app.routes.admin_routes import router as admin_router
 from app.routes.api_key_routes import router as api_key_router
@@ -17,6 +18,9 @@ from app.routes.vote_routes import router as vote_router
 from app.routes.whitelist_routes import router as whitelist_router
 from app.routes.feedback_routes import router as feedback_router
 from app.routes.user_group_routes import router as user_group_router
+
+#Keycloak SSO router
+from app.routes.auth_routes import router as auth_router
 
 #Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -55,3 +59,5 @@ app.include_router(vote_router, prefix="/api/votes", tags=["Votes"])
 app.include_router(whitelist_router, prefix="/api/whitelist", tags=["Whitelist"])
 app.include_router(feedback_router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(user_group_router, prefix="/api/user-groups", tags=["UserGroups"])
+
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])

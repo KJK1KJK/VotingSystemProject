@@ -10,6 +10,7 @@ import GroupsPage from './pages/GroupsPage';
 import ResultsPage from './pages/ResultsPage';
 import MyPollsPage from './pages/MyPollsPage';
 import VotePage from './pages/VotePage';
+import AuthCallback from './pages/AuthCallback';
 
 // Components
 import Navbar from './components/Navbar';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/results" element={<ResultsPage />} />
             <Route path="/results/:pollId" element={<ResultsPage />} />
             <Route path="/vote" element={<VotePage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
         </Router>
       </ThemeProvider>

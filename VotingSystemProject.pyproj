@@ -41,6 +41,7 @@
     <Compile Include="app\routes\admin_routes.py" />
     <Compile Include="app\routes\answer_routes.py" />
     <Compile Include="app\routes\api_key_routes.py" />
+    <Compile Include="app\routes\auth_routes.py" />
     <Compile Include="app\routes\candidate_routes.py" />
     <Compile Include="app\routes\feedback_routes.py" />
     <Compile Include="app\routes\question_routes.py" />
@@ -63,6 +64,7 @@
     <Compile Include="app\schemas\voting_session.py" />
     <Compile Include="app\schemas\whitelist.py" />
     <Compile Include="app\services\database.py" />
+    <Compile Include="app\utils\auth_utils.py" />
     <Compile Include="app\__init__.py" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +74,7 @@
     <Folder Include="app\utils\" />
     <Folder Include="app\services\" />
     <Folder Include="app\routes\" />
+    <Folder Include="sso\" />
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
