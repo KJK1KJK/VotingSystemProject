@@ -140,6 +140,7 @@ def update_voting_session(
     
     return db_voting_session
 
+#Get all sessions that the user has access to
 @router.post("/user/whitelisted", response_model=List[VotingSessionResponse])
 def get_whitelisted_sessions(request: UserIDRequest, db: Session = Depends(get_db)):
     

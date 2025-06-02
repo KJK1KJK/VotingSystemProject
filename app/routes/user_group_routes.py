@@ -102,6 +102,9 @@ def get_whitelist(db: Session = Depends(get_db)):
 
     #Check if any group exists
     groups = db.query(UserGroup).all()
+    if not groups:
+         raise HTTPException(status_code=404, detail="No groups found")
+
 
     return groups
 

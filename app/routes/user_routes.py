@@ -86,7 +86,7 @@ def check_user_exists(user_name: str, db: Session = Depends(get_db)):
     return {"exists": user is not None}
 
 #Login and get user credentials
-@router.post("/login/", response_model=UserLoginResponse)
+@router.post("/login/", response_model=UserOut)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     #Check if credentials are correct
@@ -98,4 +98,4 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if user.password == "":
          raise HTTPException(status_code=403, detail="This account uses Keycloak")
 
-    return {"username": user.username, "email": user.email, "id": user.id}
+    return user
