@@ -3,7 +3,7 @@ version: '3.8'
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    command: start-dev
+    command: start-dev --import-realm --override=true
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -16,6 +16,9 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    volumes:
+      - ./keycloak_data:/opt/keycloak/data
+      - ./keycloak_import:/opt/keycloak/data/import
 
   postgres:
     image: postgres:16

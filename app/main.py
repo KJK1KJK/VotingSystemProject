@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Security, HTTPException, Depends
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.services.database import Base, engine
 from app.middleware import api_key_middleware
+
+import subprocess
 
 #database routes
 from app.routes.user_routes import router as user_router
@@ -26,7 +29,13 @@ from app.routes.auth_routes import router as auth_router
 Base.metadata.create_all(bind=engine)
 #exit()
 
+#Update migrations
+subprocess.run(["alembic", "upgrade", "head"])
+
 app = FastAPI()
+
+#Add SessionMiddleware with a secure secret key
+app.add_middleware(SessionMiddleware, secret_key="your-very-secret-key")
 
 #Add CORS Middleware
 app.add_middleware(

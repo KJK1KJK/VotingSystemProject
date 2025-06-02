@@ -13,8 +13,8 @@ oauth = OAuth()
 oauth.register(
     name='keycloak',
     client_id='VotingSystem',
-    client_secret='c5dj9vrmOPkP0ubZCfjqa8tdrKWnoVWu',
-    server_metadata_url='http://localhost:8080/realms/your-realm/.well-known/openid-configuration',
+    client_secret='h9r83L145P9tyo7RcwV4LrtLChYcOQrP',
+    server_metadata_url='http://localhost:8080/realms/VotingSystem/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid profile email'},
 )
 
