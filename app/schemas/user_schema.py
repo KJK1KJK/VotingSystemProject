@@ -8,6 +8,11 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class UserLoginResponse(BaseModel):
+    username: str
+    email: str
+    id: int
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
