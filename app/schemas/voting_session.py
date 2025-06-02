@@ -5,7 +5,7 @@ from typing import Optional
 class VotingSessionBase(BaseModel):
     title: str
     description: Optional[str] = None
-
+    
 class VotingSessionCreate(VotingSessionBase):
     creator_id: int
     pass

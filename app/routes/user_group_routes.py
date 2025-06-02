@@ -17,8 +17,8 @@ router = APIRouter()
 def create_group(group: UserGroupCreate, db: Session = Depends(get_db)):
 
     #Check if the name is not already in use
-    group = db.query(UserGroup).filter(UserGroup.name == group.name).first()
-    if group:
+    created_group = db.query(UserGroup).filter(UserGroup.name == group.name).first()
+    if created_group:
         raise HTTPException(status_code=404, detail="User group name taken")
 
     new_group = UserGroup(
@@ -102,8 +102,6 @@ def get_whitelist(db: Session = Depends(get_db)):
 
     #Check if any group exists
     groups = db.query(UserGroup).all()
-    if not groups:
-         raise HTTPException(status_code=404, detail="Not groups found")
 
     return groups
 

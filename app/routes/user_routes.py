@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.services.database import get_db
 from app.models import User
-from app.schemas.user_schema import UserCreate, UserOut, UserBase, LoginRequest
+from app.schemas.user_schema import *
 from passlib.hash import bcrypt
 
 router = APIRouter()
@@ -86,7 +86,7 @@ def check_user_exists(user_name: str, db: Session = Depends(get_db)):
     return {"exists": user is not None}
 
 #Login and get user credentials
-@router.post("/login/", response_model=UserBase)
+@router.post("/login/", response_model=UserLoginResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     #Check if credentials are correct
