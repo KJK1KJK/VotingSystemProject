@@ -94,4 +94,8 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user or not bcrypt.verify(request.password, user.password):
         raise HTTPException(status_code=404, detail="Invalid email or password")
 
+    #Check if account is not authclock authenticated
+    if user.password == "":
+         raise HTTPException(status_code=403, detail="This account uses Keycloak")
+
     return {"username": user.username, "email": user.email, "id": user.id}

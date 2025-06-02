@@ -10,3 +10,7 @@ pytest==7.4.0
 pytest-cov==4.1.0
 starlette
 alembic
+python3-saml
+xmlsec
+authlib
+python-multipart

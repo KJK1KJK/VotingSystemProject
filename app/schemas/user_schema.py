@@ -27,6 +27,7 @@ class UserOut(UserBase):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
 #Admin schema
 class AdminBase(BaseModel):
     username: str

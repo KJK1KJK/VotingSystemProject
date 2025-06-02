@@ -15,6 +15,8 @@ import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+import { useNavigate } from 'react-router-dom';
+
 interface SignInDialogProps {
   open: boolean;
   onClose: () => void;
@@ -27,6 +29,9 @@ const SignInDialog = ({ open, onClose, onLoginSuccess }: SignInDialogProps) => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+
+  //SSO variable
+  const navigate = useNavigate();
 
   const signInMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -86,6 +91,11 @@ const SignInDialog = ({ open, onClose, onLoginSuccess }: SignInDialogProps) => {
     onClose();
   };
 
+  //Handle Keycloak redirect
+  const handleKeycloakLogin = () => {
+    window.location.href = 'http://localhost:8000/auth/login';
+  };
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <form onSubmit={handleSubmit}>
@@ -127,6 +137,20 @@ const SignInDialog = ({ open, onClose, onLoginSuccess }: SignInDialogProps) => {
               required
               fullWidth
             />
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleKeycloakLogin}
+              sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
+            >
+              <img 
+                src="https://www.keycloak.org/resources/images/keycloak_logo_200px.svg" 
+                alt="Keycloak" 
+                width="20" 
+                style={{ marginRight: 8 }}
+              />
+              Sign in with Keycloak
+            </Button>
             {error && (
               <Typography color="error" variant="body2">
                 {error}
