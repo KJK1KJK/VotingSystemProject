@@ -30,7 +30,7 @@ Base.metadata.create_all(bind=engine)
 #exit()
 
 #Update migrations
-subprocess.run(["alembic", "upgrade", "head"])
+#subprocess.run(["alembic", "upgrade", "head"])
 
 app = FastAPI()
 

@@ -15,3 +15,16 @@
 # Instructions for running the tests:
 1. run an administrator cmd/powershell
 2. run command: python -m pytest tests/ -v
+
+# Instructions for running the entire project using docker
+1. Run an administrator cmd/powershell
+2. Run wsl if on Windows
+3. Access the main project folder (int mnt/c if using wsl)
+4. Run these commands to install docker
+4a. mkdir -p ~/.docker/cli-plugins
+4b. curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose
+4c. curl -sSL https://github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
+4d. chmod +x ~/.docker/cli-plugins/docker-buildx
+4e. chmod +x ~/.docker/cli-plugins/docker-compose
+5. Run this command to build: COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker compose --env-file .env build
+6. Run this comment to start the app: docker-compose up

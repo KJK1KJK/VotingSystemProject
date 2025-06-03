@@ -1,0 +1,6 @@
+*
+!src/
+!public/
+!package*.json
+!*.config.js
+!*.config.ts

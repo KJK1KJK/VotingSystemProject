@@ -30,6 +30,15 @@ def create_voting_session(
     db.add(new_session)
     db.commit()
     db.refresh(new_session)
+
+    #Add creator to the whitelist
+    whitelist_entry = Whitelist(
+        user_id = session_data.creator_id,
+        session_id = new_session.id
+    )
+    db.add(whitelist_entry)
+    db.commit()
+    db.refresh(whitelist_entry)
     
     return new_session
 
