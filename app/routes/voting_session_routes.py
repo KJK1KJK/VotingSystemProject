@@ -39,8 +39,6 @@ def get_voting_sessions(db: Session = Depends(get_db)):
 
     #Check if any sessions exists
     sessions = db.query(VotingSession).all()
-    if not sessions:
-        raise HTTPException(status_code=404, detail="No voting sessions found")
 
     return sessions
 

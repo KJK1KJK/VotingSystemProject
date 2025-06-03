@@ -33,6 +33,10 @@ const Navbar = () => {
   const userId = Cookies.get('userId');
   const username = Cookies.get('username');
 
+  // Add console log to debug cookie state
+  console.log('Current userId:', userId);
+  console.log('Current username:', username);
+
   const handleTabChange = (newValue: string) => {
     navigate(newValue);
   };
@@ -96,17 +100,86 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const handleKeycloakLogin = () => {
+    window.location.href = 'http://localhost:8000/auth/login';
+  };
+
   if (!userId) {
     return (
       <AppBar position="static">
         <Toolbar>
+          <PollIcon sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            PollHub
+            <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              PollHub
+            </RouterLink>
           </Typography>
           <Button color="inherit" onClick={() => handleTabChange('/')}>
             Home
           </Button>
+          <Button color="inherit" onClick={() => setOpen(true)}>
+            Login
+          </Button>
         </Toolbar>
+
+        <Dialog open={open} onClose={() => setOpen(false)}>
+          <DialogTitle>{isSignUp ? 'Sign Up' : 'Sign In'}</DialogTitle>
+          <DialogContent>
+            {error && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+            )}
+            {isSignUp && (
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Username"
+                fullWidth
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              />
+            )}
+            <TextField
+              margin="dense"
+              label="Email"
+              type="email"
+              fullWidth
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <TextField
+              margin="dense"
+              label="Password"
+              type="password"
+              fullWidth
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleKeycloakLogin}
+              sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
+            >
+              <img 
+                src="https://www.keycloak.org/resources/images/icon.svg" 
+                alt="Keycloak" 
+                width="20" 
+                style={{ marginRight: 8 }}
+              />
+              Sign in with Keycloak
+            </Button>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsSignUp(!isSignUp)}>
+              {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+            </Button>
+            <Button onClick={isSignUp ? handleSignUp : handleSignIn}>
+              {isSignUp ? 'Sign Up' : 'Sign In'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </AppBar>
     );
   }
@@ -121,7 +194,13 @@ const Navbar = () => {
           </RouterLink>
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2,
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}>
           <Button 
             color="inherit" 
             onClick={() => handleTabChange('/')}
@@ -167,10 +246,10 @@ const Navbar = () => {
           >
             Results
           </Button>
-          <Button color="inherit" onClick={handleLogout}>
-            Logout
-          </Button>
         </Box>
+        <Button color="inherit" onClick={handleLogout}>
+          Logout
+        </Button>
       </Toolbar>
 
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -207,6 +286,23 @@ const Navbar = () => {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: -1, mb: 1 }}>
+            🐱 Meow! Don't forget your password, human!
+          </Typography>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleKeycloakLogin}
+            sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
+          >
+            <img 
+              src="https://www.keycloak.org/resources/images/keycloak_logo_200px.svg" 
+              alt="Keycloak" 
+              width="20" 
+              style={{ marginRight: 8 }}
+            />
+            Sign in with Keycloak
+          </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsSignUp(!isSignUp)}>

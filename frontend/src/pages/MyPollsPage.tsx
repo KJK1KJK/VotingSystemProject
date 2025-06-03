@@ -19,6 +19,8 @@ import {
   Divider,
   TextField,
   IconButton,
+  Checkbox,
+  Autocomplete,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -34,6 +36,7 @@ interface Poll {
   title: string;
   description: string;
   is_published: boolean;
+  creator_id: number;
   questions?: {
     id: number;
     text: string;
@@ -52,7 +55,23 @@ interface Poll {
 
 interface Question {
   text: string;
-  options: string[];
+  options: {
+    text: string;
+    isOpenAnswer: boolean;
+  }[];
+}
+
+interface WhitelistEntry {
+  user_id: number;
+  session_id: number;
+  id: number;
+}
+
+interface UserGroup {
+  id: number;
+  name: string;
+  description: string;
+  creator_id: number;
 }
 
 const MyPollsPage = () => {
@@ -61,11 +80,25 @@ const MyPollsPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newPollTitle, setNewPollTitle] = useState('');
   const [newPollDescription, setNewPollDescription] = useState('');
-  const [questions, setQuestions] = useState<Question[]>([{ text: '', options: [''] }]);
+  const [questions, setQuestions] = useState<Question[]>([{ 
+    text: '', 
+    options: [{ text: '', isOpenAnswer: false }] 
+  }]);
   const queryClient = useQueryClient();
   const userId = Cookies.get('userId');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pollToDelete, setPollToDelete] = useState<Poll | null>(null);
+  const [selectedGroups, setSelectedGroups] = useState<UserGroup[]>([]);
+
+  // Fetch whitelist data
+  const { data: whitelist } = useQuery<WhitelistEntry[]>({
+    queryKey: ['whitelist'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:8000/api/whitelist/');
+      return response.data;
+    },
+    enabled: !!userId,
+  });
 
   const { data: polls, isLoading, error } = useQuery<Poll[]>({
     queryKey: ['polls'],
@@ -74,6 +107,21 @@ const MyPollsPage = () => {
       return response.data;
     },
     enabled: !!userId,
+  });
+
+  // Filter polls based on creator only
+  const filteredPolls = polls?.filter(poll => {
+    // Only show polls created by the current user
+    return poll.creator_id === Number(userId);
+  });
+
+  // Add query for user groups
+  const { data: userGroups } = useQuery<UserGroup[]>({
+    queryKey: ['userGroups'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:8000/api/user-groups/');
+      return response.data;
+    },
   });
 
   const createPollMutation = useMutation({
@@ -102,20 +150,27 @@ const MyPollsPage = () => {
         const questionId = questionResponse.data.id;
 
         // 3. Create candidates for each question
-        const candidatePromises = question.options.map(option => 
-          axios.post(`http://localhost:8000/api/candidates/${questionId}/candidates/`, {
-            name: option,
-            description: "",
+        const candidatePromises = question.options.map(async (option) => {
+          const candidateResponse = await axios.post(`http://localhost:8000/api/candidates/${questionId}/candidates/`, {
+            name: option.text,
+            description: option.isOpenAnswer ? "open" : "closed",
             user_input: ""
-          })
-        );
+          });
+          return candidateResponse.data;
+        });
 
-        await Promise.all(candidatePromises);
-        return questionResponse.data;
+        const candidates = await Promise.all(candidatePromises);
+        return {
+          ...question,
+          candidates
+        };
       });
 
-      await Promise.all(questionPromises);
-      return sessionResponse.data;
+      const questionsData = await Promise.all(questionPromises);
+      return {
+        ...sessionResponse.data,
+        questions: questionsData
+      };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['polls'] });
@@ -146,7 +201,7 @@ const MyPollsPage = () => {
 
   const publishPollMutation = useMutation({
     mutationFn: async (pollId: number) => {
-      const response = await axios.put(`http://localhost:8000/api/voting-sessions/${pollId}/publish/`);
+      const response = await axios.patch(`http://localhost:8000/api/voting-sessions/${pollId}/publish/`);
       return response.data;
     },
     onSuccess: () => {
@@ -235,33 +290,212 @@ const MyPollsPage = () => {
     });
   };
 
-  const handleCreatePoll = () => {
+  const handleEditPoll = async (poll: Poll) => {
+    setNewPollTitle(poll.title);
+    setNewPollDescription(poll.description);
+    setQuestions(poll.questions?.map(q => ({
+      text: q.title,
+      options: q.candidates.map(c => ({
+        text: c.name,
+        isOpenAnswer: c.description === "open"
+      }))
+    })) || [{ text: '', options: [{ text: '', isOpenAnswer: false }] }]);
+    setCreateDialogOpen(true);
+    setSelectedPoll(poll);
+    setSelectedGroups([]); // Reset selected groups
+  };
+
+  const handleUpdatePoll = async () => {
+    if (!selectedPoll) return;
+
     if (!newPollTitle.trim() || !newPollDescription.trim()) {
       alert('Please fill in all required fields');
       return;
     }
 
-    if (questions.some(q => !q.text.trim() || q.options.some(o => !o.trim()))) {
-      alert('Please fill in all questions and options');
+    if (questions.some(q => !q.text.trim() || q.options.some(o => !o.isOpenAnswer && !o.text.trim()))) {
+      alert('Please fill in all questions and non-open answer options');
       return;
     }
 
-    createPollMutation.mutate({
-      title: newPollTitle,
-      description: newPollDescription,
-      questions,
-      creator_id: Number(userId),
-    });
+    try {
+      // 1. Update voting session
+      await axios.put(`http://localhost:8000/api/voting-sessions/${selectedPoll.id}/`, {
+        title: newPollTitle,
+        description: newPollDescription,
+        creator_id: Number(userId)
+      });
+
+      // 2. Get existing questions
+      const questionsResponse = await axios.get(`http://localhost:8000/api/questions/${selectedPoll.id}/questions/`);
+      const existingQuestions = questionsResponse.data;
+
+      // 3. Update or create questions
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i];
+        if (i < existingQuestions.length) {
+          // Update existing question
+          await axios.put(`http://localhost:8000/api/questions/questions/${existingQuestions[i].id}`, {
+            type: "multiple_choice",
+            title: question.text,
+            description: "",
+            is_quiz: false
+          });
+
+          // Get existing candidates for this question
+          const candidatesResponse = await axios.get(`http://localhost:8000/api/candidates/${existingQuestions[i].id}/candidates/`);
+          const existingCandidates = candidatesResponse.data;
+
+          // Update or create candidates
+          for (let j = 0; j < question.options.length; j++) {
+            const option = question.options[j];
+            if (j < existingCandidates.length) {
+              // Update existing candidate
+              await axios.put(`http://localhost:8000/api/candidates/candidates/${existingCandidates[j].id}`, {
+                name: option.text,
+                description: option.isOpenAnswer ? "open" : "closed",
+                user_input: ""
+              });
+            } else {
+              // Create new candidate
+              await axios.post(`http://localhost:8000/api/candidates/${existingQuestions[i].id}/candidates/`, {
+                name: option.text,
+                description: option.isOpenAnswer ? "open" : "closed",
+                user_input: ""
+              });
+            }
+          }
+        } else {
+          // Create new question
+          const questionResponse = await axios.post(`http://localhost:8000/api/questions/${selectedPoll.id}/questions/`, {
+            type: "multiple_choice",
+            title: question.text,
+            description: "",
+            is_quiz: false
+          });
+
+          // Create candidates for new question
+          for (const option of question.options) {
+            await axios.post(`http://localhost:8000/api/candidates/${questionResponse.data.id}/candidates/`, {
+              name: option.text,
+              description: option.isOpenAnswer ? "open" : "closed",
+              user_input: ""
+            });
+          }
+        }
+      }
+
+      // Delete any extra questions and their candidates
+      for (let i = questions.length; i < existingQuestions.length; i++) {
+        await axios.delete(`http://localhost:8000/api/questions/questions/${existingQuestions[i].id}`);
+      }
+
+      // Update whitelist groups
+      // First, get current whitelist entries
+      const whitelistResponse = await axios.get(`http://localhost:8000/api/whitelist/session`, {
+        data: { session_id: selectedPoll.id }
+      });
+      const currentWhitelist = whitelistResponse.data;
+
+      // Remove all current whitelist entries
+      for (const entry of currentWhitelist) {
+        await axios.delete('http://localhost:8000/api/whitelist/', {
+          data: { user_id: entry.user_id, session_id: selectedPoll.id }
+        });
+      }
+
+      // Add new selected groups to whitelist
+      for (const group of selectedGroups) {
+        await axios.post('http://localhost:8000/api/whitelist/group', {
+          group_id: group.id,
+          session_id: selectedPoll.id
+        });
+      }
+
+      // Reset form and close dialog
+      setCreateDialogOpen(false);
+      resetCreateForm();
+      setSelectedPoll(null);
+      setSelectedGroups([]);
+      
+      // Refresh the polls list
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
+    } catch (error) {
+      console.error('Error updating poll:', error);
+      alert('Failed to update poll. Please try again.');
+    }
+  };
+
+  const handleCreatePoll = async () => {
+    if (!newPollTitle.trim() || !newPollDescription.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (questions.some(q => !q.text.trim() || q.options.some(o => !o.isOpenAnswer && !o.text.trim()))) {
+      alert('Please fill in all questions and non-open answer options');
+      return;
+    }
+
+    try {
+      // Create new poll
+      const sessionResponse = await axios.post('http://localhost:8000/api/voting-sessions/', {
+        title: newPollTitle,
+        description: newPollDescription,
+        creator_id: Number(userId)
+      });
+      const sessionId = sessionResponse.data.id;
+
+      // Create questions
+      for (const question of questions) {
+        const questionResponse = await axios.post(`http://localhost:8000/api/questions/${sessionId}/questions/`, {
+          type: "multiple_choice",
+          title: question.text,
+          description: "",
+          is_quiz: false
+        });
+
+        // Create candidates for each question
+        for (const option of question.options) {
+          await axios.post(`http://localhost:8000/api/candidates/${questionResponse.data.id}/candidates/`, {
+            name: option.text,
+            description: option.isOpenAnswer ? "open" : "closed",
+            user_input: ""
+          });
+        }
+      }
+
+      // Add selected groups to whitelist
+      for (const group of selectedGroups) {
+        await axios.post('http://localhost:8000/api/whitelist/group', {
+          group_id: group.id,
+          session_id: sessionId
+        });
+      }
+      
+      // Reset form and close dialog
+      setCreateDialogOpen(false);
+      resetCreateForm();
+      setSelectedPoll(null);
+      setSelectedGroups([]);
+      
+      // Refresh the polls list
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
+    } catch (error) {
+      console.error('Error creating poll:', error);
+      alert('Failed to create poll. Please try again.');
+    }
   };
 
   const resetCreateForm = () => {
     setNewPollTitle('');
     setNewPollDescription('');
-    setQuestions([{ text: '', options: [''] }]);
+    setQuestions([{ text: '', options: [{ text: '', isOpenAnswer: false }] }]);
+    setSelectedGroups([]);
   };
 
   const addQuestion = () => {
-    setQuestions([...questions, { text: '', options: [''] }]);
+    setQuestions([...questions, { text: '', options: [{ text: '', isOpenAnswer: false }] }]);
   };
 
   const removeQuestion = (index: number) => {
@@ -270,7 +504,7 @@ const MyPollsPage = () => {
 
   const addOption = (questionIndex: number) => {
     const newQuestions = [...questions];
-    newQuestions[questionIndex].options.push('');
+    newQuestions[questionIndex].options.push({ text: '', isOpenAnswer: false });
     setQuestions(newQuestions);
   };
 
@@ -288,19 +522,15 @@ const MyPollsPage = () => {
 
   const updateOptionText = (questionIndex: number, optionIndex: number, text: string) => {
     const newQuestions = [...questions];
-    newQuestions[questionIndex].options[optionIndex] = text;
+    newQuestions[questionIndex].options[optionIndex].text = text;
     setQuestions(newQuestions);
   };
 
-  const handleEditPoll = (poll: Poll) => {
-    setNewPollTitle(poll.title);
-    setNewPollDescription(poll.description);
-    setQuestions(poll.questions?.map(q => ({
-      text: q.title,
-      options: q.candidates.map(c => c.name)
-    })) || [{ text: '', options: [''] }]);
-    setCreateDialogOpen(true);
-    setSelectedPoll(null);
+  const toggleOptionType = (questionIndex: number, optionIndex: number) => {
+    const newQuestions = [...questions];
+    newQuestions[questionIndex].options[optionIndex].isOpenAnswer = 
+      !newQuestions[questionIndex].options[optionIndex].isOpenAnswer;
+    setQuestions(newQuestions);
   };
 
   const handlePublishPoll = () => {
@@ -353,8 +583,8 @@ const MyPollsPage = () => {
     );
   }
 
-  const publishedPolls = polls?.filter(poll => poll.is_published) || [];
-  const unpublishedPolls = polls?.filter(poll => !poll.is_published) || [];
+  const publishedPolls = filteredPolls?.filter(poll => poll.is_published) || [];
+  const unpublishedPolls = filteredPolls?.filter(poll => !poll.is_published) || [];
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -371,6 +601,14 @@ const MyPollsPage = () => {
           Create Poll
         </Button>
       </Box>
+
+      {publishedPolls.length === 0 && unpublishedPolls.length === 0 && (
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Typography variant="h6" color="textSecondary">
+            You haven't created any polls yet. Click the "Create Poll" button to get started!
+          </Typography>
+        </Box>
+      )}
 
       {publishedPolls.length > 0 && (
         <>
@@ -531,17 +769,7 @@ const MyPollsPage = () => {
                     {publishPollMutation.isPending ? <CircularProgress size={24} /> : 'Publish'}
                   </Button>
                 </>
-              ) : (
-                <Button
-                  onClick={handleFinishPoll}
-                  startIcon={<CheckCircleIcon />}
-                  variant="contained"
-                  color="primary"
-                  disabled={finishPollMutation.isPending}
-                >
-                  {finishPollMutation.isPending ? <CircularProgress size={24} /> : 'Finish'}
-                </Button>
-              )}
+              ) : null}
             </DialogActions>
           </>
         )}
@@ -601,9 +829,21 @@ const MyPollsPage = () => {
                     margin="dense"
                     label={`Option ${optionIndex + 1}`}
                     fullWidth
-                    value={option}
+                    value={option.text}
                     onChange={(e) => updateOptionText(questionIndex, optionIndex, e.target.value)}
+                    disabled={option.isOpenAnswer}
                   />
+                  <Box sx={{ ml: 2 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={option.isOpenAnswer}
+                          onChange={() => toggleOptionType(questionIndex, optionIndex)}
+                        />
+                      }
+                      label="Open Answer"
+                    />
+                  </Box>
                   <IconButton 
                     onClick={() => removeOption(questionIndex, optionIndex)}
                     disabled={question.options.length === 1}
@@ -627,6 +867,20 @@ const MyPollsPage = () => {
           >
             Add Question
           </Button>
+          <Autocomplete
+            multiple
+            options={userGroups || []}
+            getOptionLabel={(option) => option.name}
+            value={selectedGroups}
+            onChange={(_, newValue) => setSelectedGroups(newValue)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Whitelist Groups"
+                placeholder="Select groups"
+              />
+            )}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {
@@ -634,12 +888,12 @@ const MyPollsPage = () => {
             resetCreateForm();
           }}>Cancel</Button>
           <Button 
-            onClick={handleCreatePoll}
+            onClick={selectedPoll ? handleUpdatePoll : handleCreatePoll}
             variant="contained"
             color="primary"
             disabled={createPollMutation.isPending}
           >
-            {createPollMutation.isPending ? <CircularProgress size={24} /> : (selectedPoll ? 'Save Changes' : 'Create Poll')}
+            {selectedPoll ? 'Save Changes' : 'Create Poll'}
           </Button>
         </DialogActions>
       </Dialog>
