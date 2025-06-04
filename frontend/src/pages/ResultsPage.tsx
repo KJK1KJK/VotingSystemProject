@@ -1,106 +1,170 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Container,
   Typography,
   Box,
   Card,
   CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   CircularProgress,
-  LinearProgress,
+  Alert,
+  IconButton,
+  CardActions,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import DownloadIcon from '@mui/icons-material/Download';
+
+interface Vote {
+  id: number;
+  session_id: number;
+  user_id: number;
+  candidate_id: number;
+  time_voted: string;
+}
 
 interface Poll {
   id: number;
   title: string;
   description: string;
-  end_date: string;
+  is_published: boolean;
+  creator_id: number;
+}
+
+interface Question {
+  id: number;
+  session_id: number;
+  text: string;
+}
+
+interface Candidate {
+  id: number;
+  question_id: number;
+  text: string;
+  votes: number;
+}
+
+interface PollResult {
+  poll: Poll;
   questions: {
-    id: number;
-    text: string;
-    options: {
-      id: number;
-      text: string;
-      votes: number;
-    }[];
+    question: Question;
+    candidates: Candidate[];
+    userVote: Vote | null;
   }[];
 }
 
 const ResultsPage = () => {
-  const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const userId = Cookies.get('userId');
 
-  const { data: polls, isLoading, error } = useQuery<Poll[]>({
-    queryKey: ['finishedPolls'],
+  const { data: userVotes, isLoading: isLoadingVotes } = useQuery<Vote[]>({
+    queryKey: ['userVotes'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/voting-sessions/finished/');
+      const response = await axios.get(`http://localhost:8000/api/votes/user/${userId}`);
       return response.data;
     },
     enabled: !!userId,
   });
 
-  const handlePollClick = async (poll: Poll) => {
+  const { data: polls, isLoading: isLoadingPolls } = useQuery<Poll[]>({
+    queryKey: ['polls'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:8000/api/voting-sessions/');
+      return response.data;
+    },
+  });
+
+  const { data: results, isLoading: isLoadingResults } = useQuery<PollResult[]>({
+    queryKey: ['pollResults', userVotes, polls],
+    queryFn: async () => {
+      if (!userVotes || !polls) return [];
+
+      const results: PollResult[] = [];
+
+      for (const poll of polls) {
+        // Only include polls where the current user is the creator
+        if (!poll.is_published || poll.creator_id !== Number(userId)) continue;
+
+        // Get questions for this poll
+        const questionsResponse = await axios.get(`http://localhost:8000/api/questions/${poll.id}/questions/`);
+        const questions: Question[] = questionsResponse.data;
+
+        const pollQuestions = [];
+
+        for (const question of questions) {
+          // Get candidates for this question
+          const candidatesResponse = await axios.get(`http://localhost:8000/api/candidates/${question.id}/candidates/`);
+          const candidates: Candidate[] = candidatesResponse.data;
+
+          // Find user's vote for this question
+          const userVote = userVotes.find(vote => 
+            candidates.some(candidate => candidate.id === vote.candidate_id)
+          ) || null;
+
+          pollQuestions.push({
+            question,
+            candidates,
+            userVote
+          });
+        }
+
+        // Only include polls where the user has voted
+        
+        results.push({
+          poll,
+          questions: pollQuestions
+        });
+        
+      }
+
+      return results;
+    },
+    enabled: !!userVotes && !!polls,
+  });
+
+  const handleDownloadResults = async (sessionId: number) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/voting-sessions/${poll.id}/results/`);
-      setSelectedPoll(response.data);
-    } catch (error) {
-      console.error('Error fetching poll results:', error);
-      alert('Failed to load poll results. Please try again.');
-    }
-  };
-
-  const handleExportResults = async () => {
-    if (!selectedPoll) return;
-
-    try {
-      const response = await axios.get(
-        `http://localhost:8000/api/voting-sessions/${selectedPoll.id}/export/`,
-        { responseType: 'blob' }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const response = await axios.get(`http://localhost:8000/api/votes/session/${sessionId}/results`);
+      const votes = response.data;
+      
+      const prettyJson = JSON.stringify(votes, null, 2);
+      
+      const url = window.URL.createObjectURL(new Blob([prettyJson], { type: 'application/json' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${selectedPoll.title}_results.csv`);
+      link.setAttribute('download', `poll_${sessionId}_results.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Error exporting results:', error);
-      alert('Failed to export results. Please try again.');
+      console.error('Error downloading results:', error);
+      alert('Failed to download results');
     }
   };
+
+  if (isLoadingVotes || isLoadingPolls || isLoadingResults) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (!results || results.length === 0) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="info">
+          You haven't completed any polls yet. Results will appear here after you vote in published polls.
+        </Alert>
+      </Container>
+    );
+  }
 
   if (!userId) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>
+        <Alert severity="warning">
           Please sign in to view results
-        </Typography>
-      </Container>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography>Loading results...</Typography>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography color="error">Error loading results</Typography>
+        </Alert>
       </Container>
     );
   }
@@ -110,91 +174,54 @@ const ResultsPage = () => {
       <Typography variant="h4" gutterBottom>
         Poll Results
       </Typography>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
-        {polls?.map((poll) => (
-          <Card 
-            key={poll.id}
-            sx={{ 
-              cursor: 'pointer',
-              '&:hover': {
-                boxShadow: 6,
-              },
-            }}
-            onClick={() => handlePollClick(poll)}
-          >
-            <CardContent>
-              <Typography variant="h6" component="h2">
-                {poll.title}
-              </Typography>
-              <Typography color="textSecondary" gutterBottom>
-                {poll.description}
-              </Typography>
-              <Typography variant="subtitle2" color="textSecondary">
-                Ended: {new Date(poll.end_date).toLocaleDateString()}
-              </Typography>
-            </CardContent>
+      <Box sx={{ display: 'grid', gap: 3 }}>
+        {results.map((result) => (
+          <Card key={result.poll.id}>
+            <Box sx={{ display: 'flex' }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  {result.poll.title}
+                </Typography>
+                <Typography color="textSecondary" paragraph>
+                  {result.poll.description}
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  {result.questions.map(({ question, candidates, userVote }) => (
+                    <Box key={question.id} sx={{ mb: 3 }}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        {question.text}
+                      </Typography>
+                      {candidates.map((candidate) => (
+                        <Box key={candidate.id} sx={{ mb: 1, ml: 2 }}>
+                          <Typography variant="body1">
+                            {candidate.text}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  ))}
+                </Box>
+              </CardContent>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                p: 2,
+                borderLeft: '1px solid',
+                borderColor: 'divider'
+              }}>
+                <IconButton 
+                  onClick={() => handleDownloadResults(result.poll.id)}
+                  color="primary"
+                  title="Download Results"
+                  size="large"
+                >
+                  <DownloadIcon />
+                </IconButton>
+              </Box>
+            </Box>
           </Card>
         ))}
       </Box>
-
-      {/* Results Dialog */}
-      <Dialog 
-        open={!!selectedPoll} 
-        onClose={() => setSelectedPoll(null)}
-        maxWidth="md"
-        fullWidth
-      >
-        {selectedPoll && (
-          <>
-            <DialogTitle>{selectedPoll.title}</DialogTitle>
-            <DialogContent>
-              <Typography color="textSecondary" paragraph>
-                {selectedPoll.description}
-              </Typography>
-              {selectedPoll.questions.map((question) => {
-                const totalVotes = question.options.reduce((sum, option) => sum + option.votes, 0);
-                return (
-                  <Box key={question.id} sx={{ mb: 4 }}>
-                    <Typography variant="h6" gutterBottom>
-                      {question.text}
-                    </Typography>
-                    {question.options.map((option) => {
-                      const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
-                      return (
-                        <Box key={option.id} sx={{ mb: 2 }}>
-                          <Box display="flex" justifyContent="space-between" mb={1}>
-                            <Typography>{option.text}</Typography>
-                            <Typography>
-                              {option.votes} votes ({percentage.toFixed(1)}%)
-                            </Typography>
-                          </Box>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={percentage} 
-                            sx={{ height: 10, borderRadius: 5 }}
-                          />
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                );
-              })}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setSelectedPoll(null)}>Cancel</Button>
-              <Button
-                onClick={handleExportResults}
-                startIcon={<FileDownloadIcon />}
-                variant="contained"
-                color="primary"
-              >
-                Export Results
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
     </Container>
   );
 };

@@ -41,8 +41,6 @@ def get_whitelist(db: Session = Depends(get_db)):
 
     #Check if any whitelists entries exist
     whitelists = db.query(Whitelist).all()
-    if not whitelists:
-         raise HTTPException(status_code=404, detail="No whitelists entries found")
 
     return whitelists
 
@@ -74,8 +72,6 @@ def get_users_by_session(request: WhitelistBySessionRequest, db: Session = Depen
 
     #Check if any sessions with whitelisted users exist
     whitelists = db.query(Whitelist).filter(Whitelist.session_id == request.session_id).all()
-    if not whitelists:
-         raise HTTPException(status_code=404, detail="No whitelisted user for session found")
 
     return whitelists
 
@@ -109,8 +105,6 @@ def whitelist_group_users(request: WhitelistGroupUsersRequest, db: Session = Dep
 
     #Fetch users in the group
     members = db.query(GroupMembership).filter(GroupMembership.group_id == request.group_id).all()
-    if not members:
-        raise HTTPException(status_code=404, detail="Group has no users")
 
     new_entries = []
 

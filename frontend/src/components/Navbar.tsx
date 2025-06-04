@@ -285,6 +285,9 @@ const Navbar = () => {
         <Button color="inherit" onClick={handleLogout}>
           Logout
         </Button>
+        <Typography variant="body1" sx={{ ml: 2 }}>
+          Logged as: {username}
+        </Typography>
       </Toolbar>
 
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -321,9 +324,6 @@ const Navbar = () => {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: -1, mb: 1 }}>
-            🐱 Meow! Don't forget your password, human!
-          </Typography>
           <Button
             fullWidth
             variant="outlined"

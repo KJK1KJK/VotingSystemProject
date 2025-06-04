@@ -32,7 +32,8 @@ def cast_vote(vote_data: VoteCreate, db: Session = Depends(get_db)):
     #Create a new vote entry
     new_vote = Vote(
         user_id=vote_data.user_id,
-        candidate_id=vote_data.candidate_id
+        candidate_id=vote_data.candidate_id,
+        user_input=vote_data.user_input
     )
     db.add(new_vote)
     db.commit()
@@ -83,7 +84,7 @@ def get_session_results(session_id: int, db: Session = Depends(get_db)):
     
     #Get all questions for the session
     questions = db.query(Question).filter(Question.session_id == session_id).all()
-
+    print(questions)
     #Check if there are any question in the session
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for this session")
@@ -99,10 +100,6 @@ def get_session_results(session_id: int, db: Session = Depends(get_db)):
     #Get all votes for those candidates
     candidate_ids = [c.id for c in candidates]
     votes = db.query(Vote).filter(Vote.candidate_id.in_(candidate_ids)).all()
-
-    #Check if there are any votes
-    if not votes:
-        raise HTTPException(status_code=404, detail="No votes found for this session")
 
     return votes
 
