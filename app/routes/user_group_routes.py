@@ -138,8 +138,6 @@ def get_members_by_id(request: GroupByIdRequest, db: Session = Depends(get_db)):
 
     #Check if any members exists
     members = db.query(GroupMembership).filter(GroupMembership.group_id == request.group_id).all()
-    if not members:
-        raise HTTPException(status_code=404, detail="No members found for this group")
     
     return members
 

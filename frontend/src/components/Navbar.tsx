@@ -250,6 +250,9 @@ const Navbar = () => {
         <Button color="inherit" onClick={handleLogout}>
           Logout
         </Button>
+        <Typography variant="body1" sx={{ ml: 2 }}>
+          Logged as: {username}
+        </Typography>
       </Toolbar>
 
       <Dialog open={open} onClose={() => setOpen(false)}>

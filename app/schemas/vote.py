@@ -6,7 +6,7 @@ class VoteBase(BaseModel):
     candidate_id: int
 
 class VoteCreate(VoteBase):
-    pass
+    user_input: str = ""
 
 class VoteResponse(VoteBase):
     id: int

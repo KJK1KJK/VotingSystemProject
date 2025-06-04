@@ -73,34 +73,43 @@ const VotePage = () => {
       const whitelistEntries = whitelistResponse.data as WhitelistEntry[];
 
       // Filter polls based on whitelist and published status
-      const filteredPolls = allPolls.filter((poll: Poll) => {
+      return allPolls.filter((poll: Poll) => {
         // Only show published polls
         if (!poll.is_published) return false;
         
-        // Check whitelist
-        return whitelistEntries.some(entry => 
+        // Check whitelist - user must be in the whitelist for this poll
+        const isWhitelisted = whitelistEntries.some(entry => 
           entry.user_id === Number(userId) && entry.session_id === poll.id
         );
-      });
 
-      // Add group member count to each poll
-      return filteredPolls.map((poll: Poll) => ({
-        ...poll,
-        group_member_count: whitelistEntries.filter(entry => entry.session_id === poll.id).length
-      }));
+        return isWhitelisted;
+      });
     },
     enabled: !!userId,
+    refetchInterval: 5000, // Refetch every 5 seconds to keep the list updated
   });
 
-  // Add query for user's votes
-  const { data: userVotes } = useQuery({
-    queryKey: ['userVotes', userId],
+  // Add query for session votes
+  const { data: sessionVotes } = useQuery({
+    queryKey: ['sessionVotes'],
     queryFn: async () => {
-      if (!userId) return [];
-      const response = await axios.get(`http://localhost:8000/api/votes/user/${userId}`);
-      return response.data;
+      if (!polls) return {};
+      const votesMap: Record<number, any[]> = {};
+      
+      // Fetch votes for each session
+      await Promise.all(polls.map(async (poll) => {
+        try {
+          const response = await axios.get(`http://localhost:8000/api/votes/session/${poll.id}/results`);
+          votesMap[poll.id] = response.data;
+        } catch (error) {
+          console.error(`Error fetching votes for session ${poll.id}:`, error);
+          votesMap[poll.id] = [];
+        }
+      }));
+      
+      return votesMap;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!polls,
   });
 
   const handlePollClick = async (poll: Poll) => {
@@ -113,12 +122,9 @@ const VotePage = () => {
     } else {
       try {
         // Check if user has already voted in this poll
-        const hasVotedInPoll = userVotes?.some((vote: any) => {
-          const question = poll.questions?.find(q => 
-            q.candidates.some(c => c.id === vote.candidate_id)
-          );
-          return question !== undefined;
-        });
+        const hasVotedInPoll = sessionVotes?.[poll.id]?.some(
+          (vote: any) => vote.user_id === Number(userId)
+        );
 
         if (hasVotedInPoll) {
           alert("You have already voted in this poll!");
@@ -183,12 +189,9 @@ const VotePage = () => {
     }
 
     // Check if user has already voted in this poll
-    const hasVotedInPoll = userVotes?.some((vote: any) => {
-      const question = selectedPoll.questions?.find(q => 
-        q.candidates.some(c => c.id === vote.candidate_id)
-      );
-      return question !== undefined;
-    });
+    const hasVotedInPoll = sessionVotes?.[selectedPoll.id]?.some(
+      (vote: any) => vote.user_id === Number(userId)
+    );
 
     if (hasVotedInPoll) {
       alert("You have already voted in this poll!");
@@ -290,48 +293,89 @@ const VotePage = () => {
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
-          {polls.map((poll) => {
-            // Check if user has already voted in this poll
-            const hasVotedInPoll = userVotes?.some((vote: any) => {
-              const question = poll.questions?.find(q => 
-                q.candidates.some(c => c.id === vote.candidate_id)
+        <>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
+            {polls.map((poll) => {
+              // Check if user has already voted in this poll
+              const hasVotedInPoll = sessionVotes?.[poll.id]?.some(
+                (vote: any) => vote.user_id === Number(userId)
               );
-              return question !== undefined;
-            });
 
-            return (
-              <Card 
-                key={poll.id}
-                sx={{ 
-                  cursor: hasVotedInPoll ? 'not-allowed' : 'pointer',
-                  opacity: hasVotedInPoll ? 0.7 : 1,
-                  '&:hover': {
-                    boxShadow: hasVotedInPoll ? 1 : 6,
-                  },
-                }}
-                onClick={() => !hasVotedInPoll && handlePollClick(poll)}
-              >
-                <CardContent>
-                  <Typography variant="h6" component="h2">
-                    {poll.title}
-                  </Typography>
-                  <Typography color="textSecondary" gutterBottom>
-                    {poll.description}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Group Members: {poll.group_member_count || 0}
-                  </Typography>
-                  {hasVotedInPoll && (
-                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                      You have already voted in this poll
+              // Skip polls that have been voted on - they'll go in the Finished section
+              if (hasVotedInPoll) return null;
+
+              return (
+                <Card 
+                  key={poll.id}
+                  sx={{ 
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: 6,
+                    },
+                  }}
+                  onClick={() => handlePollClick(poll)}
+                >
+                  <CardContent>
+                    <Typography variant="h6" component="h2">
+                      {poll.title}
                     </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Box>
+                    <Typography color="textSecondary" gutterBottom>
+                      {poll.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
+
+          {/* Finished Polls Section */}
+          {polls.some(poll => sessionVotes?.[poll.id]?.some(
+            (vote: any) => vote.user_id === Number(userId)
+          )) && (
+            <>
+              <Typography variant="h4" gutterBottom sx={{ mt: 6 }}>
+                Finished Polls
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
+                {polls.map((poll) => {
+                  // Check if user has already voted in this poll
+                  const hasVotedInPoll = sessionVotes?.[poll.id]?.some(
+                    (vote: any) => vote.user_id === Number(userId)
+                  );
+
+                  // Only show polls that have been voted on
+                  if (!hasVotedInPoll) return null;
+
+                  return (
+                    <Card 
+                      key={poll.id}
+                      sx={{ 
+                        cursor: 'not-allowed',
+                        opacity: 0.7,
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        '&:hover': {
+                          boxShadow: 1,
+                        },
+                      }}
+                    >
+                      <CardContent>
+                        <Typography variant="h6" component="h2">
+                          {poll.title}
+                        </Typography>
+                        <Typography color="textSecondary" gutterBottom>
+                          {poll.description}
+                        </Typography>
+                        <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
+                          ✓ You have completed this poll
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </Box>
+            </>
+          )}
+        </>
       )}
 
       {/* Poll Dialog */}

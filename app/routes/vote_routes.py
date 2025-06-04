@@ -83,7 +83,7 @@ def get_session_results(session_id: int, db: Session = Depends(get_db)):
     
     #Get all questions for the session
     questions = db.query(Question).filter(Question.session_id == session_id).all()
-
+    print(questions)
     #Check if there are any question in the session
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for this session")

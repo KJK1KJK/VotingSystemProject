@@ -130,6 +130,7 @@ const MyPollsPage = () => {
       description: string;
       questions: Question[];
       creator_id: number;
+      selectedGroups: UserGroup[];
     }) => {
       // 1. Create voting session
       const sessionResponse = await axios.post('http://localhost:8000/api/voting-sessions/', {
@@ -140,42 +141,40 @@ const MyPollsPage = () => {
       const sessionId = sessionResponse.data.id;
 
       // 2. Create questions
-      const questionPromises = data.questions.map(async (question) => {
+      for (const question of data.questions) {
         const questionResponse = await axios.post(`http://localhost:8000/api/questions/${sessionId}/questions/`, {
           type: "multiple_choice",
           title: question.text,
           description: "",
           is_quiz: false
         });
-        const questionId = questionResponse.data.id;
 
         // 3. Create candidates for each question
-        const candidatePromises = question.options.map(async (option) => {
-          const candidateResponse = await axios.post(`http://localhost:8000/api/candidates/${questionId}/candidates/`, {
+        for (const option of question.options) {
+          await axios.post(`http://localhost:8000/api/candidates/${questionResponse.data.id}/candidates/`, {
             name: option.text,
             description: option.isOpenAnswer ? "open" : "closed",
             user_input: ""
           });
-          return candidateResponse.data;
+        }
+      }
+
+      // 4. Add selected groups to whitelist
+      for (const group of data.selectedGroups) {
+        await axios.post('http://localhost:8000/api/whitelist/group', {
+          group_id: group.id,
+          session_id: sessionId
         });
+      }
 
-        const candidates = await Promise.all(candidatePromises);
-        return {
-          ...question,
-          candidates
-        };
-      });
-
-      const questionsData = await Promise.all(questionPromises);
-      return {
-        ...sessionResponse.data,
-        questions: questionsData
-      };
+      return sessionResponse.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['polls'] });
       setCreateDialogOpen(false);
       resetCreateForm();
+      setSelectedPoll(null);
+      setSelectedGroups([]);
     },
   });
 
@@ -323,7 +322,7 @@ const MyPollsPage = () => {
       await axios.put(`http://localhost:8000/api/voting-sessions/${selectedPoll.id}/`, {
         title: newPollTitle,
         description: newPollDescription,
-        creator_id: Number(userId)
+        is_published: selectedPoll.is_published
       });
 
       // 2. Get existing questions
@@ -335,7 +334,7 @@ const MyPollsPage = () => {
         const question = questions[i];
         if (i < existingQuestions.length) {
           // Update existing question
-          await axios.put(`http://localhost:8000/api/questions/questions/${existingQuestions[i].id}`, {
+          await axios.put(`http://localhost:8000/api/questions/questions/${existingQuestions[i].id}/`, {
             type: "multiple_choice",
             title: question.text,
             description: "",
@@ -351,7 +350,7 @@ const MyPollsPage = () => {
             const option = question.options[j];
             if (j < existingCandidates.length) {
               // Update existing candidate
-              await axios.put(`http://localhost:8000/api/candidates/candidates/${existingCandidates[j].id}`, {
+              await axios.put(`http://localhost:8000/api/candidates/candidates/${existingCandidates[j].id}/`, {
                 name: option.text,
                 description: option.isOpenAnswer ? "open" : "closed",
                 user_input: ""
@@ -387,13 +386,13 @@ const MyPollsPage = () => {
 
       // Delete any extra questions and their candidates
       for (let i = questions.length; i < existingQuestions.length; i++) {
-        await axios.delete(`http://localhost:8000/api/questions/questions/${existingQuestions[i].id}`);
+        await axios.delete(`http://localhost:8000/api/questions/questions/${existingQuestions[i].id}/`);
       }
 
       // Update whitelist groups
       // First, get current whitelist entries
-      const whitelistResponse = await axios.get(`http://localhost:8000/api/whitelist/session`, {
-        data: { session_id: selectedPoll.id }
+      const whitelistResponse = await axios.post(`http://localhost:8000/api/whitelist/session`, {
+        session_id: selectedPoll.id
       });
       const currentWhitelist = whitelistResponse.data;
 
@@ -426,7 +425,7 @@ const MyPollsPage = () => {
     }
   };
 
-  const handleCreatePoll = async () => {
+  const handleCreatePoll = () => {
     if (!newPollTitle.trim() || !newPollDescription.trim()) {
       alert('Please fill in all required fields');
       return;
@@ -437,54 +436,13 @@ const MyPollsPage = () => {
       return;
     }
 
-    try {
-      // Create new poll
-      const sessionResponse = await axios.post('http://localhost:8000/api/voting-sessions/', {
-        title: newPollTitle,
-        description: newPollDescription,
-        creator_id: Number(userId)
-      });
-      const sessionId = sessionResponse.data.id;
-
-      // Create questions
-      for (const question of questions) {
-        const questionResponse = await axios.post(`http://localhost:8000/api/questions/${sessionId}/questions/`, {
-          type: "multiple_choice",
-          title: question.text,
-          description: "",
-          is_quiz: false
-        });
-
-        // Create candidates for each question
-        for (const option of question.options) {
-          await axios.post(`http://localhost:8000/api/candidates/${questionResponse.data.id}/candidates/`, {
-            name: option.text,
-            description: option.isOpenAnswer ? "open" : "closed",
-            user_input: ""
-          });
-        }
-      }
-
-      // Add selected groups to whitelist
-      for (const group of selectedGroups) {
-        await axios.post('http://localhost:8000/api/whitelist/group', {
-          group_id: group.id,
-          session_id: sessionId
-        });
-      }
-      
-      // Reset form and close dialog
-      setCreateDialogOpen(false);
-      resetCreateForm();
-      setSelectedPoll(null);
-      setSelectedGroups([]);
-      
-      // Refresh the polls list
-      queryClient.invalidateQueries({ queryKey: ['polls'] });
-    } catch (error) {
-      console.error('Error creating poll:', error);
-      alert('Failed to create poll. Please try again.');
-    }
+    createPollMutation.mutate({
+      title: newPollTitle,
+      description: newPollDescription,
+      questions,
+      creator_id: Number(userId),
+      selectedGroups
+    });
   };
 
   const resetCreateForm = () => {
