@@ -124,7 +124,9 @@ const ResultsPage = () => {
   const handleDownloadResults = async (sessionId: number) => {
     try {
       const response = await axios.get(`http://localhost:8000/api/votes/session/${sessionId}/results`);
-      const prettyJson = JSON.stringify(response.data, null, 2);
+      const votes = response.data;
+      
+      const prettyJson = JSON.stringify(votes, null, 2);
       
       const url = window.URL.createObjectURL(new Blob([prettyJson], { type: 'application/json' }));
       const link = document.createElement('a');

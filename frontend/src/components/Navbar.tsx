@@ -289,9 +289,6 @@ const Navbar = () => {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: -1, mb: 1 }}>
-            🐱 Meow! Don't forget your password, human!
-          </Typography>
           <Button
             fullWidth
             variant="outlined"

@@ -32,7 +32,8 @@ def cast_vote(vote_data: VoteCreate, db: Session = Depends(get_db)):
     #Create a new vote entry
     new_vote = Vote(
         user_id=vote_data.user_id,
-        candidate_id=vote_data.candidate_id
+        candidate_id=vote_data.candidate_id,
+        user_input=vote_data.user_input
     )
     db.add(new_vote)
     db.commit()
