@@ -94,15 +94,32 @@ const Navbar = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+  try {
+    // Clear frontend cookies first
     Cookies.remove('userId');
     Cookies.remove('username');
+    
+    // Call backend logout endpoint which will handle Keycloak logout
+    window.location.href = 'http://localhost:8000/auth/logout';
+    
+    // No need to navigate here since the backend will redirect
+  } catch (error) {
+    console.error('Logout failed:', error);
     navigate('/');
+  }
+};
+
+  //Function for handling sso login/registration
+  const handleKeycloakAuth = (mode: 'login' | 'register') => {
+    // Clear any existing cookies before starting new auth flow
+    Cookies.remove('userId');
+    Cookies.remove('username');
+
+    const redirectPath = mode === 'register' ? '/auth/register' : '/auth/login';
+    window.location.href = `http://localhost:8000${redirectPath}`;
   };
 
-  const handleKeycloakLogin = () => {
-    window.location.href = 'http://localhost:8000/auth/login';
-  };
 
   if (!userId) {
     return (
@@ -156,20 +173,38 @@ const Navbar = () => {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleKeycloakLogin}
-              sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
-            >
-              <img 
-                src="https://www.keycloak.org/resources/images/icon.svg" 
-                alt="Keycloak" 
-                width="20" 
-                style={{ marginRight: 8 }}
-              />
-              Sign in with Keycloak
+            {!isSignUp && (
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => handleKeycloakAuth('login')}
+                sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
+              >
+                <img 
+                  src="https://www.keycloak.org/resources/images/icon.svg" 
+                  alt="Keycloak" 
+                  width="20" 
+                  style={{ marginRight: 8 }}
+                />
+                Sign in with Keycloak
             </Button>
+            )}
+            {isSignUp && (
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => handleKeycloakAuth('register')}
+                sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
+              >
+                <img 
+                  src="https://www.keycloak.org/resources/images/icon.svg" 
+                  alt="Keycloak" 
+                  width="20" 
+                  style={{ marginRight: 8 }}
+                />
+                Create Keycloak Account
+              </Button>
+            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setIsSignUp(!isSignUp)}>
@@ -292,7 +327,7 @@ const Navbar = () => {
           <Button
             fullWidth
             variant="outlined"
-            onClick={handleKeycloakLogin}
+            onClick={() => handleKeycloakAuth('login')}
             sx={{ mt: 2, backgroundColor: '#f0f0f0' }}
           >
             <img 

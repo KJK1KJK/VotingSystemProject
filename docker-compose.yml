@@ -7,6 +7,8 @@ services:
       - .:/app
     ports:
       - "${BACKEND_PORT}:8000"
+    networks: 
+      - voting-net
     depends_on:
       - keycloak
     env_file:
@@ -21,6 +23,8 @@ services:
       - /app/node_modules
     ports:
       - "${FRONTEND_PORT}:3000"
+    networks: 
+      - voting-net
     depends_on:
       - backend
     environment:
@@ -41,6 +45,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks: 
+      - voting-net
     ports:
       - "${KEYCLOAK_PORT}:8080"
     volumes:
@@ -55,6 +61,8 @@ services:
       POSTGRES_DB: ${KC_DB_NAME}
       POSTGRES_USER: ${KC_DB_USERNAME}
       POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    networks: 
+      - voting-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USERNAME}"]
       interval: 5s
@@ -67,3 +75,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  voting-net:
+    driver: bridge

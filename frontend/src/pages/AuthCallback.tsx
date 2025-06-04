@@ -9,20 +9,42 @@ export default function AuthCallback() {
   useEffect(() => {
     const error = searchParams.get('error');
     if (error) {
-        navigate(`/login?error=${encodeURIComponent(error)}`);
-        return;
+      navigate(`/login?error=${encodeURIComponent(error)}`);
+      return;
     }
-    const token = searchParams.get('token');
+
+    const username = searchParams.get('username');
     const userId = searchParams.get('user_id');
 
-    if (token && userId) {
-      Cookies.set('authToken', token, { expires: 1 }); //1 day expiry
-      Cookies.set('userId', userId, { expires: 7 });
-      navigate('/dashboard'); //Redirect to protected route
+    if (username && userId) {
+      // Store user information in cookies
+      Cookies.set('username', username, { 
+        expires: 1, // 1 day expiry
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
+      Cookies.set('userId', userId, { 
+        expires: 7,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
+      
+      // Redirect to dashboard or home page
+      navigate('/');
     } else {
+      // Check if we're in the middle of OAuth flow
+      const code = searchParams.get('code');
+      const state = searchParams.get('state');
+      
+      if (code && state) {
+        // OAuth flow in progress, don't redirect yet
+        return;
+      }
+      
+      // No user info and not in OAuth flow - authentication failed
       navigate('/login?error=authentication_failed');
     }
-  }, []);
+  }, [navigate, searchParams]);
 
   return <div>Processing login...</div>;
 }
