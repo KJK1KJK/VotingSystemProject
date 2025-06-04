@@ -22,7 +22,7 @@ from app.routes.user_group_routes import router as user_group_router
 #Keycloak SSO router
 from app.routes.auth_routes import router as auth_router
 
-Base.metadata.drop_all(bind=engine)
+#Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 #exit()
 
