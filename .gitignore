@@ -737,3 +737,4 @@ npm-debug.log
 
 # OSX hidden files
 .DS_Store
+/app/routes/voting_session_routes.py
