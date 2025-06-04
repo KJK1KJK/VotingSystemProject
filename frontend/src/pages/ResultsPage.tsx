@@ -108,12 +108,12 @@ const ResultsPage = () => {
         }
 
         // Only include polls where the user has voted
-        if (pollQuestions.some(q => q.userVote)) {
-          results.push({
-            poll,
-            questions: pollQuestions
-          });
-        }
+        
+        results.push({
+          poll,
+          questions: pollQuestions
+        });
+        
       }
 
       return results;

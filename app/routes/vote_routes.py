@@ -101,10 +101,6 @@ def get_session_results(session_id: int, db: Session = Depends(get_db)):
     candidate_ids = [c.id for c in candidates]
     votes = db.query(Vote).filter(Vote.candidate_id.in_(candidate_ids)).all()
 
-    #Check if there are any votes
-    if not votes:
-        raise HTTPException(status_code=404, detail="No votes found for this session")
-
     return votes
 
 #Delete a vote
