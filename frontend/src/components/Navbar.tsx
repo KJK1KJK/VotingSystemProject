@@ -111,7 +111,7 @@ const Navbar = () => {
           <PollIcon sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              PollHub
+              VotingApplication
             </RouterLink>
           </Typography>
           <Button color="inherit" onClick={() => handleTabChange('/')}>
