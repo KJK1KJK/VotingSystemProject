@@ -18,12 +18,8 @@ from app.services.database import get_db
 router = APIRouter()
 oauth = OAuth()
 
-#Get path to .env in root folder
-project_root = Path(__file__).resolve().parents[2]
-dotenv_path = project_root / '.env'
-
 #Load the .env file
-load_dotenv(dotenv_path)
+load_dotenv()
 
 #Access url environment variables
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL") + ':' + os.getenv("KEYCLOAK_PORT")

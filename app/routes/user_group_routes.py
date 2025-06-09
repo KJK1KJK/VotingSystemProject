@@ -102,9 +102,6 @@ def get_whitelist(db: Session = Depends(get_db)):
 
     #Check if any group exists
     groups = db.query(UserGroup).all()
-    if not groups:
-         raise HTTPException(status_code=404, detail="No groups found")
-
 
     return groups
 
@@ -114,8 +111,6 @@ def get_group_by_id(request: GroupByIdRequest, db: Session = Depends(get_db)):
 
     #Check if group exists
     group = db.query(UserGroup).filter(UserGroup.id == request.group_id).first()
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
 
     return group
 
@@ -125,8 +120,6 @@ def get_group_by_name(request: GroupByNameRequest, db: Session = Depends(get_db)
     
     #Check if group exists
     group = db.query(UserGroup).filter(UserGroup.name == request.name).first()
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
 
     return group
 
@@ -136,8 +129,6 @@ def get_members_by_id(request: GroupByIdRequest, db: Session = Depends(get_db)):
     
     #Check if group exists
     group = db.query(UserGroup).filter(UserGroup.id == request.group_id).first()
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
 
     #Check if any members exists
     members = db.query(GroupMembership).filter(GroupMembership.group_id == request.group_id).all()
@@ -155,9 +146,7 @@ def get_members_by_name(request: GroupByNameRequest, db: Session = Depends(get_d
 
     #Check if any members exists
     members = db.query(GroupMembership).filter(GroupMembership.group_id == group.id).all()
-    if not members:
-        raise HTTPException(status_code=404, detail="No members found for this group")
-    
+
     return members
 
 #Check if user is a part of a group

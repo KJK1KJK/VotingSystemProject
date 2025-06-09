@@ -10,5 +10,5 @@ class GroupWhitelist(Base):
     group_id = Column(Integer, ForeignKey("user_groups.id"))
     session_id = Column(Integer, ForeignKey("voting_sessions.id"))
     
-    group = relationship("Group", back_populates="group_whitelist")
+    group = relationship("UserGroup", back_populates="group_whitelist")
     session = relationship("VotingSession", back_populates="group_whitelist")

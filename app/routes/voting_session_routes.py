@@ -48,8 +48,6 @@ def get_voting_sessions(db: Session = Depends(get_db)):
 
     #Check if any sessions exists
     sessions = db.query(VotingSession).all()
-    if not sessions:
-        raise HTTPException(status_code=404, detail="No voting sessions found")
 
     return sessions
 
@@ -59,8 +57,6 @@ def get_voting_session(session_id: int, db: Session = Depends(get_db)):
 
     #Check if session exists
     session = db.query(VotingSession).filter(VotingSession.id == session_id).first()
-    if not session:
-        raise HTTPException(status_code=404, detail="Voting session not found")
 
     return session
 
@@ -90,6 +86,7 @@ def publish_voting_session(session_id: int, db: Session = Depends(get_db)):
     #Mark a voting session as published.
     session.is_published = True
     db.commit()
+
     return {"detail": "Voting session published successfully"}
 
 #Get all published sessions for a user
@@ -102,9 +99,6 @@ def get_published_sessions(request: UserIDRequest, db: Session = Depends(get_db)
         VotingSession.is_published == True
     ).all()
     
-    if not sessions:
-        raise HTTPException(status_code=404, detail="No published voting sessions found for this user")
-    
     return sessions
 
 #Get all drafts for a user
@@ -116,10 +110,6 @@ def get_unpublished_sessions(request: UserIDRequest, db: Session = Depends(get_d
         VotingSession.creator_id == request.user_id,
         VotingSession.is_published == False
     ).all()
-    
-    #Check if there are any drafts for this user
-    if not sessions:
-        raise HTTPException(status_code=404, detail="No unpublished drafts found for this user")
     
     return sessions
 
@@ -158,9 +148,5 @@ def get_whitelisted_sessions(request: UserIDRequest, db: Session = Depends(get_d
         Whitelist.user_id == request.user_id,
         VotingSession.is_published == True
     ).all()
-
-    #Check if sessions exists
-    if not sessions:
-        raise HTTPException(status_code=404, detail="No whitelisted voting sessions found for this user")
 
     return sessions

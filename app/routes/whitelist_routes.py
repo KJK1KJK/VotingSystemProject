@@ -44,13 +44,12 @@ def get_whitelist(db: Session = Depends(get_db)):
 
     return whitelists
 
+#Get whitelist entries by ID
 @router.post("/entries", response_model=list[WhitelistResponse])
 def get_whitelist(request: WhitelistByID, db: Session = Depends(get_db)):
 
     #Check if whitelist exists
     whitelist = db.query(Whitelist).filter(Whitelist.id == request.whitelist_id).all()
-    if not whitelist:
-         raise HTTPException(status_code=404, detail="No whitelist found")
 
     return whitelist
 
@@ -60,8 +59,6 @@ def get_sessions_by_user(request: WhitelistByUserRequest, db: Session = Depends(
 
     #Check if any whitelisted users exist
     whitelists = db.query(Whitelist).filter(Whitelist.user_id == request.user_id).all()
-    if not whitelists:
-         raise HTTPException(status_code=404, detail="No whitelisted sessions for user found")
 
     return whitelists
 

@@ -42,10 +42,13 @@ def create_question(
 @router.get("/{session_id}/questions/", response_model=List[QuestionResponse])
 def get_questions(session_id: int, db: Session = Depends(get_db)):
 
+    #Check if the voting session exists
+    session = db.query(VotingSession).filter(VotingSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Voting session not found")
+
     #Check if question exists
     questions = db.query(Question).filter(Question.session_id == session_id).all()
-    if not questions:
-        raise HTTPException(status_code=404, detail="No questions found for this session")
     
     return questions
 
@@ -55,8 +58,7 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
     
     #Check if question exists 
     question = db.query(Question).filter(Question.id == question_id).first()
-    if not question:
-        raise HTTPException(status_code=404, detail="Question not found")
+
     return question
 
 #Update a question

@@ -56,8 +56,7 @@ def get_answer(answer_id: int, db: Session = Depends(get_db)):
 
     #Check if the answer exists
     answer = db.query(Answer).filter(Answer.id == answer_id).first()
-    if not answer:
-        raise HTTPException(status_code=404, detail="Answer not found")
+
     return answer
 
 #Update an answer

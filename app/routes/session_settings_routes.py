@@ -41,10 +41,13 @@ def create_session_setting(
 @router.get("/{session_id}/settings/", response_model=List[SessionSettingsResponse])
 def get_session_settings(session_id: int, db: Session = Depends(get_db)):
     
+    #Check if the voting session exists
+    session = db.query(VotingSession).filter(VotingSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Voting session not found")
+
     #Check if settings exists
     settings = db.query(SessionSettings).filter(SessionSettings.session_id == session_id).all()
-    if not settings:
-        raise HTTPException(status_code=404, detail="No settings found for this session")
     
     return settings
 

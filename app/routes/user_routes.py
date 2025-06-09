@@ -51,8 +51,6 @@ def get_user(user_name: str, db: Session = Depends(get_db)):
 
     #Check if user exists
     user = db.query(User).filter(User.username == user_name).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
     return user
 
@@ -62,8 +60,6 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
     #Check if user exists
     user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
     return user
 
@@ -73,9 +69,6 @@ def get_user(user_email: str, db: Session = Depends(get_db)):
 
     #Check if user exists
     user = db.query(User).filter(User.email == user_email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
 
     return user
 

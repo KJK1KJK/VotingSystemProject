@@ -21,7 +21,7 @@ from app.routes.vote_routes import router as vote_router
 from app.routes.whitelist_routes import router as whitelist_router
 from app.routes.feedback_routes import router as feedback_router
 from app.routes.user_group_routes import router as user_group_router
-from app.routes.user_group_routes import router as group_whitelist_router
+from app.routes.group_whitelist_routes import router as group_whitelist_router
 
 #Keycloak SSO router
 from app.routes.auth_routes import router as auth_router
@@ -69,6 +69,6 @@ app.include_router(vote_router, prefix="/api/votes", tags=["Votes"])
 app.include_router(whitelist_router, prefix="/api/whitelist", tags=["Whitelist"])
 app.include_router(feedback_router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(user_group_router, prefix="/api/user-groups", tags=["UserGroups"])
-app.include_router(user_group_router, prefix="/api/group-whitelist", tags=["GroupWhitelist"])
+app.include_router(group_whitelist_router, prefix="/api/group-whitelist", tags=["GroupWhitelist"])
 
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])

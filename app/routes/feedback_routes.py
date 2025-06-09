@@ -37,8 +37,6 @@ def get_feedback_by_user(user_id: int, db: Session = Depends(get_db)):
 
     #Check if any feedback exists
     feedbacks = db.query(Feedback).filter(Feedback.user_id == user_id).all()
-    if not feedbacks:
-        raise HTTPException(status_code=404, detail="No feedback found for this user")
 
     return feedbacks
 
@@ -48,8 +46,6 @@ def get_feedback_by_id(feedback_id: int, db: Session = Depends(get_db)):
 
     #Check if feedback exists
     feedback = db.query(Feedback).filter(Feedback.id == feedback_id).first()
-    if not feedback:
-        raise HTTPException(status_code=404, detail="Feedback not found")
 
     return feedback
 

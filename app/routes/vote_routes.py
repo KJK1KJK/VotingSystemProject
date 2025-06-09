@@ -51,6 +51,7 @@ def get_votes_by_candidate(candidate_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     votes = db.query(Vote).filter(Vote.candidate_id == candidate_id).all()
+
     return votes
 
 #Get all votes cast by a user
@@ -64,6 +65,7 @@ def get_user_votes(user_id: int, db: Session = Depends(get_db)):
 
     #Get all the votes for the user
     votes = db.query(Vote).filter(Vote.user_id == user_id).all()
+
     return votes
 
 #Get all votes in a voting session
@@ -76,6 +78,7 @@ def get_votes_by_session(session_id: int, db: Session = Depends(get_db)):
         .filter(Candidate.question_id == session_id)
         .all()
     )
+
     return votes
 
 #Get total votes per candidate in a session
@@ -84,7 +87,7 @@ def get_session_results(session_id: int, db: Session = Depends(get_db)):
     
     #Get all questions for the session
     questions = db.query(Question).filter(Question.session_id == session_id).all()
-    print(questions)
+
     #Check if there are any question in the session
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for this session")

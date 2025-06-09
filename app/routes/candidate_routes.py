@@ -53,8 +53,7 @@ def get_candidates(question_id: int, db: Session = Depends(get_db)):
 def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     #Check if candidate exists
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
+
     return candidate
 
 #Update a candidate

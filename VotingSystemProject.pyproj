@@ -95,6 +95,7 @@
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
     <Content Include="sso\.env" />
+    <Content Include="sso\entrypoint.sh" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

@@ -58,8 +58,6 @@ def get_user(admin_name: str, db: Session = Depends(get_db)):
 
     #Check if admin exists
     admin = db.query(AdminUser).filter(AdminUser.username == admin_name).first()
-    if not admin:
-        raise HTTPException(status_code=404, detail="Admin not found")
 
     return admin
 
@@ -69,8 +67,6 @@ def get_user(admin_id: int, db: Session = Depends(get_db)):
 
     #Check if admin exists
     admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
-    if not admin:
-        raise HTTPException(status_code=404, detail="Admin not found")
 
     return admin
 
@@ -80,8 +76,6 @@ def get_user(user_email: str, db: Session = Depends(get_db)):
 
     #Check if admin exists
     admin = db.query(AdminUser).filter(AdminUser.email == user_email).first()
-    if not admin:
-        raise HTTPException(status_code=404, detail="Admin not found")
 
     return admin
 
