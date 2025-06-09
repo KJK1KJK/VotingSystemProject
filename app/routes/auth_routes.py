@@ -26,10 +26,10 @@ dotenv_path = project_root / '.env'
 load_dotenv(dotenv_path)
 
 #Access url environment variables
-KEYCLOAK_URL = os.getenv("KEYCLOAK_URL") + os.getenv("KEYCLOAK_PORT")
-INTERNAL_KEYCLOAK_URL = os.getenv("INTERNAL_KEYCLOAK_URL") + os.getenv("KEYCLOAK_PORT")
-BACKEND_URL = os.getenv("BACKEND_URL") + os.getenv("BACKEND_PORT")
-FRONTEND_URL = os.getenv("FRONTEND_URL") + os.getenv("FRONTEND_PORT")
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL") + ':' + os.getenv("KEYCLOAK_PORT")
+INTERNAL_KEYCLOAK_URL = os.getenv("INTERNAL_KEYCLOAK_URL") + ':' + os.getenv("KEYCLOAK_PORT")
+BACKEND_URL = os.getenv("BACKEND_URL") + ':' + os.getenv("BACKEND_PORT")
+FRONTEND_URL = os.getenv("FRONTEND_URL") + ':' + os.getenv("FRONTEND_PORT")
 REALM = "VotingSystem"
 CLIENT_ID = "VotingSystem"
 
