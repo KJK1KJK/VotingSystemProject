@@ -25,8 +25,12 @@ oauth.register(
     #Internal working variables
     name='keycloak',
     client_id=CLIENT_ID,
-    client_secret='XEshRA6gO1urtYvdsjy0jObhz8PJYi0N',
-    server_metadata_url=f'http://{KEYCLOAK_URL}/realms/{REALM}/.well-known/openid-configuration',
+    client_secret='UkvIcKe0HYEJ2lMz2Src496tV66Tt8cn',
+    api_base_url=f"http://{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect",
+    authorize_url=f"http://{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/auth",
+    access_token_url=f"http://keycloak:8080/realms/{REALM}/protocol/openid-connect/token",
+    userinfo_endpoint=f"http://keycloak:8080/realms/{REALM}/protocol/openid-connect/userinfo",
+    jwks_uri=f"http://keycloak:8080/realms/{REALM}/protocol/openid-connect/certs",
     client_kwargs={'scope': 'openid profile email'},
 )
 

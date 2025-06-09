@@ -9,7 +9,7 @@ from app.models import User
 from app.schemas.user_schema import UserOut
 
 #Keycloak config
-KEYCLOAK_URL = "http://localhost:8080"
+KEYCLOAK_URL = "http://keycloak:8080"
 REALM = "VotingSystem"
 CLIENT_ID = "VotingSystem"
 
