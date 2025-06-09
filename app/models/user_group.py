@@ -14,6 +14,7 @@ class UserGroup(Base):
 
     members = relationship("GroupMembership", back_populates="group", cascade="all, delete-orphan")
     creator = relationship("User", back_populates="user_group")
+    group_whitelist = relationship("GroupWhitelist", back_populates="group")
 
 class GroupMembership(Base):
     __tablename__ = "group_memberships"

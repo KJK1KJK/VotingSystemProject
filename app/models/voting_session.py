@@ -17,3 +17,4 @@ class VotingSession(Base):
     settings = relationship("SessionSettings", back_populates="voting_session", cascade="all, delete-orphan")
     questions = relationship("Question", back_populates="voting_session", cascade="all, delete-orphan")
     whitelist = relationship("Whitelist", back_populates="session", cascade="all, delete-orphan")
+    group_whitelist = relationship("GroupWhitelist", back_populates="session", cascade="all, delete-orphan")

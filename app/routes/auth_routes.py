@@ -6,17 +6,30 @@ from urllib.parse import urlencode
 from jose import jwt, jwk, JWTError
 from datetime import datetime
 
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+
 from app.models import User
 
 from app.services.database import get_db
-from app.utils.auth_utils import get_current_user
 
+#Create router and authentification
 router = APIRouter()
 oauth = OAuth()
 
-KEYCLOAK_URL = "localhost:8080"
-BACKEND_URL = "localhost:8000"
-FRONTEND_URL = "localhost:3000"
+#Get path to .env in root folder
+project_root = Path(__file__).resolve().parents[2]
+dotenv_path = project_root / '.env'
+
+#Load the .env file
+load_dotenv(dotenv_path)
+
+#Access url environment variables
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL") + os.getenv("KEYCLOAK_PORT")
+INTERNAL_KEYCLOAK_URL = os.getenv("INTERNAL_KEYCLOAK_URL") + os.getenv("KEYCLOAK_PORT")
+BACKEND_URL = os.getenv("BACKEND_URL") + os.getenv("BACKEND_PORT")
+FRONTEND_URL = os.getenv("FRONTEND_URL") + os.getenv("FRONTEND_PORT")
 REALM = "VotingSystem"
 CLIENT_ID = "VotingSystem"
 
@@ -28,9 +41,9 @@ oauth.register(
     client_secret='UkvIcKe0HYEJ2lMz2Src496tV66Tt8cn',
     api_base_url=f"http://{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect",
     authorize_url=f"http://{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/auth",
-    access_token_url=f"http://keycloak:8080/realms/{REALM}/protocol/openid-connect/token",
-    userinfo_endpoint=f"http://keycloak:8080/realms/{REALM}/protocol/openid-connect/userinfo",
-    jwks_uri=f"http://keycloak:8080/realms/{REALM}/protocol/openid-connect/certs",
+    access_token_url=f"http://{INTERNAL_KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/token",
+    userinfo_endpoint=f"http://{INTERNAL_KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/userinfo",
+    jwks_uri=f"http://{INTERNAL_KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/certs",
     client_kwargs={'scope': 'openid profile email'},
 )
 
