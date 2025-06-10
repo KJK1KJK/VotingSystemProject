@@ -26,7 +26,7 @@ from app.routes.group_whitelist_routes import router as group_whitelist_router
 #Keycloak SSO router
 from app.routes.auth_routes import router as auth_router
 
-#Base.metadata.drop_all(bind=engine)
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 #exit()
 
