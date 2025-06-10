@@ -161,7 +161,7 @@ const MyPollsPage = () => {
 
       // 4. Add selected groups to whitelist
       for (const group of data.selectedGroups) {
-        await axios.post('http://localhost:8000/api/whitelist/group', {
+        await axios.post('http://localhost:8000/api/group-whitelist/', {
           group_id: group.id,
           session_id: sessionId
         });

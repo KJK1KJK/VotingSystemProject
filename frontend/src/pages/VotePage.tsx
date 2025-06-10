@@ -29,6 +29,19 @@ interface WhitelistEntry {
   id: number;
 }
 
+interface GroupWhitelistEntry {
+  group_id: number;
+  session_id: number;
+  id: number;
+}
+
+interface GroupMember {
+  user_id: number;
+  id: number;
+  group_id: number;
+  time_joined: string;
+}
+
 interface Poll {
   id: number;
   title: string;
@@ -61,31 +74,69 @@ const VotePage = () => {
   const queryClient = useQueryClient();
   const userId = Cookies.get('userId');
 
+  // Step 1: Fetch group whitelist entries
+  const { data: groupWhitelist } = useQuery<GroupWhitelistEntry[]>({
+    queryKey: ['groupWhitelist'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:8000/api/group-whitelist/');
+      return response.data;
+    },
+    enabled: !!userId,
+  });
+
   const { data: polls, isLoading, error } = useQuery<Poll[]>({
     queryKey: ['publishedPolls'],
     queryFn: async () => {
-      const [pollsResponse, whitelistResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/voting-sessions/'),
-        axios.get('http://localhost:8000/api/whitelist/')
-      ]);
-
+      // Get all voting sessions
+      const pollsResponse = await axios.get('http://localhost:8000/api/voting-sessions/');
       const allPolls = pollsResponse.data;
-      const whitelistEntries = whitelistResponse.data as WhitelistEntry[];
 
-      // Filter polls based on whitelist and published status
-      return allPolls.filter((poll: Poll) => {
-        // Only show published polls
-        if (!poll.is_published) return false;
+      // Filter polls based on group membership and published status
+      const filteredPolls = await Promise.all(allPolls.map(async (poll: Poll) => {
+        // 1. Check if poll is published
+        if (!poll.is_published) {
+          return { poll, shouldShow: false };
+        }
+
+        // Step 2a: Check if this session is in group whitelist
+        const sessionGroupWhitelist = groupWhitelist?.filter(entry => entry.session_id === poll.id) || [];
         
-        // Check whitelist - user must be in the whitelist for this poll
-        const isWhitelisted = whitelistEntries.some(entry => 
-          entry.user_id === Number(userId) && entry.session_id === poll.id
-        );
+        // Check if poll has any whitelisted groups
+        if (sessionGroupWhitelist.length === 0) {
+          return { poll, shouldShow: false };
+        }
 
-        return isWhitelisted;
-      });
+        // 2. Get all group IDs for this poll
+        const groupIds = sessionGroupWhitelist.map(entry => entry.group_id);
+
+        // Step 2c & 2d: Check membership for each group
+        let isMemberOfAnyGroup = false;
+        
+        for (const groupId of groupIds) {
+          try {
+            const response = await axios.post('http://localhost:8000/api/user-groups/groups/members/by-id', {
+              group_id: groupId
+            });
+            const groupMembers = response.data as GroupMember[];
+            
+            const isMember = groupMembers.some(member => member.user_id == Number(userId));
+
+            if (isMember) {
+              isMemberOfAnyGroup = true;
+              break;
+            }
+          } catch (error) {
+            console.error(`Error checking group membership for group ${groupId}:`, error);
+          }
+        }
+
+        return { poll, shouldShow: isMemberOfAnyGroup };
+      }));
+
+      // Filter out polls that shouldn't be shown
+      return filteredPolls.filter(result => result.shouldShow).map(result => result.poll);
     },
-    enabled: !!userId,
+    enabled: !!userId && !!groupWhitelist,
     refetchInterval: 5000, // Refetch every 5 seconds to keep the list updated
   });
 
@@ -242,7 +293,9 @@ const VotePage = () => {
           setSelectedPoll(null);
           setCurrentQuestionId(null);
           setHasJoinedPoll(false);
+          // Invalidate both polls and session votes queries to refresh the data
           queryClient.invalidateQueries({ queryKey: ['publishedPolls'] });
+          queryClient.invalidateQueries({ queryKey: ['sessionVotes'] });
         }
       }
     } catch (error) {
